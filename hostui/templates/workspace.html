@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Кабінет — NormOS Host</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    textarea { width: 100%; min-height: 180px; }
+    .meta { color: #444; }
+    .result { background: #f5f5f5; padding: 1rem; margin-top: 1rem; border-radius: 6px; }
+    .disclaimer { font-size: 0.9rem; color: #666; margin-top: 1.5rem; }
+    button { margin-top: 0.5rem; padding: 0.4rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Кабінет</h1>
+
+  <p class="meta">
+    Ви увійшли як <strong>{{ user.username }}</strong>
+    {% if profile %}
+      · Громада: {{ profile.tenant.name }}
+      · Роль: {{ profile.get_role_display }}
+    {% endif %}
+  </p>
+
+  <form method="post" action="{% url 'logout' %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Вийти</button>
+  </form>
+
+  <hr>
+
+  <h2>Документ</h2>
+  <form method="post" action="{% url 'workspace' %}">
+    {% csrf_token %}
+    <label for="text">Вставте текст (регламент, рішення, проєкт…)</label><br>
+    <textarea id="text" name="text" placeholder="Текст документа…">{{ text }}</textarea><br>
+    <button type="submit">Переглянути</button>
+  </form>
+
+  {% if result %}
+  <div class="result">
+    <h3>Результат (чернетка)</h3>
+    <p>{{ result.message }}</p>
+    <p>Символів: <strong>{{ result.char_count }}</strong></p>
+    <p>Слів (грубо): <strong>{{ result.word_count }}</strong></p>
+  </div>
+  {% endif %}
+
+  <p class="disclaimer">
+    Це не юридична консультація і не висновок про законність документа.
+    Відповідальність за рішення залишається за людиною.
+  </p>
+</body>
+</html>
