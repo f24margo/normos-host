@@ -2,54 +2,194 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Кабінет — NormOS Host</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
-    textarea { width: 100%; min-height: 180px; }
-    .meta { color: #444; }
-    .result { background: #f5f5f5; padding: 1rem; margin-top: 1rem; border-radius: 6px; }
-    .disclaimer { font-size: 0.9rem; color: #666; margin-top: 1.5rem; }
-    button { margin-top: 0.5rem; padding: 0.4rem 1rem; }
+    :root {
+      --primary: #0066cc;
+      --bg: #f8f9fa;
+      --sidebar-width: 240px;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: #1e293b; display: flex; min-height: 100vh; }
+
+    /* Бокове меню */
+    .sidebar { width: var(--sidebar-width); background: #ffffff; border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 2rem; padding-left: 0.5rem; }
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 0.25rem; }
+    .nav-link { display: block; padding: 0.6rem 0.8rem; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 0.95rem; }
+    .nav-link:hover, .nav-link.active { background: #eff6ff; color: var(--primary); }
+
+    /* Основна область */
+    .main-content { flex: 1; padding: 2rem; max-width: 960px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+    .user-info { font-size: 0.9rem; color: #64748b; }
+
+    /* Форма та картки */
+    .card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    textarea { width: 100%; min-height: 180px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.95rem; line-height: 1.5; margin-top: 0.5rem; resize: vertical; }
+    textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
+    
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 0.64rem 1.4rem; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.75rem; font-size: 0.95rem; }
+    .btn-primary:hover { background: #0052a3; }
+    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 6px; color: #64748b; cursor: pointer; }
+
+    /* Блок результатів */
+    .result-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
+    
+    /* Бейджі режимів */
+    .badge { display: inline-flex; align-items: center; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-proh { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-oblg { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-perm { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-info { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+    /* Чипи дієслів */
+    .chips-container { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+    .chip-title { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 8px; display: block; }
+    .chips-wrapper { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-block; background-color: #f1f5f9; color: #334155; padding: 5px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; border: 1px solid #e2e8f0; transition: all 0.2s ease; }
+    .chip:hover { background-color: #e2e8f0; border-color: #cbd5e1; color: #0f172a; }
+
+    .result-details-text { background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #f1f5f9; font-family: inherit; font-size: 0.95rem; line-height: 1.6; color: #334155; white-space: pre-wrap; margin-top: 0.75rem; }
+
+    .disclaimer { font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 2rem; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .main-content { padding: 1rem; }
+    }
   </style>
 </head>
 <body>
-  <h1>Кабінет</h1>
 
-  <p class="meta">
-    Ви увійшли як <strong>{{ user.username }}</strong>
-    {% if profile %}
-      · Громада: {{ profile.tenant.name }}
-      · Роль: {{ profile.get_role_display }}
-    {% endif %}
-  </p>
+  <!-- Навігаційне меню -->
+  <aside class="sidebar">
+    <div>
+      <div class="logo">NormOS Host</div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{% url 'workspace' %}" class="nav-link {% if request.resolver_match.url_name == 'workspace' %}active{% endif %}">⚡ Швидка перевірка</a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'chat_page' %}" class="nav-link {% if request.resolver_match.url_name == 'chat_page' %}active{% endif %}">🤖 ШІ-Консультант</a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'documents_page' %}" class="nav-link {% if request.resolver_match.url_name == 'documents_page' %}active{% endif %}">📁 Документи</a>
+        </li>
+        <li class="nav-item"><a href="#" class="nav-link">📚 База норм</a></li>
+        <li class="nav-item">
+          <a href="https://uacommunityhub.wixstudio.com/normos-lab" target="_blank" class="nav-link">ℹ️ Довідка та підтримка</a>
+        </li>
+      </ul>
+    </div>
 
-  <form method="post" action="{% url 'logout' %}" style="display:inline;">
-    {% csrf_token %}
-    <button type="submit">Вийти</button>
-  </form>
+    <!-- Кнопка виходу -->
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-logout" style="width: 100%;">Вийти з акаунту</button>
+    </form>
+  </aside>
 
-  <hr>
+  <!-- Основний контент -->
+  <main class="main-content">
+    <header class="header">
+      <div>
+        <h1 style="margin: 0; font-size: 1.5rem;">Робочий простір</h1>
+      </div>
+      <div class="user-info">
+        <strong>{{ user.username }}</strong>
+        {% if profile %}
+          · {{ profile.tenant.name }} ({{ profile.get_role_display }})
+        {% endif %}
+      </div>
+    </header>
 
-  <h2>Документ</h2>
-  <form method="post" action="{% url 'workspace' %}">
-    {% csrf_token %}
-    <label for="text">Вставте текст (регламент, рішення, проєкт…)</label><br>
-    <textarea id="text" name="text" placeholder="Текст документа…">{{ text }}</textarea><br>
-    <button type="submit">Переглянути</button>
-  </form>
+    <!-- Форма аналізу -->
+    <section class="card">
+      <h2 style="margin-top: 0; font-size: 1.1rem; color: #0f172a;">Експрес-перевірка документа</h2>
+      <form method="post" action="{% url 'workspace' %}">
+        {% csrf_token %}
+        <label for="text" style="font-size: 0.9rem; color: #475569;">Вставте текст (регламент, рішення, проєкт акта):</label>
+        <textarea id="text" name="text" placeholder="Вставте текст для аналізу...">{{ text }}</textarea>
+        <button type="submit" class="btn-primary">Запустити перевірку</button>
+      </form>
 
-  {% if result %}
-  <div class="result">
-    <h3>Результат (чернетка)</h3>
-    <p>{{ result.message }}</p>
-    <p>Символів: <strong>{{ result.char_count }}</strong></p>
-    <p>Слів (грубо): <strong>{{ result.word_count }}</strong></p>
-  </div>
-  {% endif %}
+      {% if result %}
+      <div class="result-card">
+        <div class="result-header">
+          <span id="modality-badge" class="badge badge-info">Аналіз</span>
+          <h3 style="margin: 0; font-size: 1.1rem; color: #0f172a;">{{ result.headline }}</h3>
+        </div>
 
-  <p class="disclaimer">
-    Це не юридична консультація і не висновок про законність документа.
-    Відповідальність за рішення залишається за людиною.
-  </p>
+        {% if result.details %}
+        <div id="raw-details" class="result-details-text">{{ result.details }}</div>
+        {% endif %}
+
+        <!-- Контейнер для чипів дієслів -->
+        <div id="chips-container" class="chips-container" style="display: none;">
+          <span class="chip-title">Знайдені юридичні дії (дієслова):</span>
+          <div id="chips-wrapper" class="chips-wrapper"></div>
+        </div>
+
+        {% if result.char_count is not None %}
+        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+          <span>⚡ Аналіз завершено успішно</span>
+          <span>Оброблено символів: <strong>{{ result.char_count }}</strong></span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </section>
+
+    <p class="disclaimer">
+      Це не юридична консультація і не висновок про законність документа. Відповідальність за прийняті рішення залишається за користувачем.
+    </p>
+  </main>
+
+  <!-- Скрипт візуалізації чипів та кольорових бейджів -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const rawDetailsElem = document.getElementById("raw-details");
+      const chipsContainer = document.getElementById("chips-container");
+      const chipsWrapper = document.getElementById("chips-wrapper");
+      const badgeElem = document.getElementById("modality-badge");
+
+      if (rawDetailsElem) {
+        const text = rawDetailsElem.innerText;
+
+        // 1. Автоматичне визначення режиму та кольору бейджа
+        if (text.includes("PROH") || text.toLowerCase().includes("заборон")) {
+          badgeElem.className = "badge badge-proh";
+          badgeElem.textContent = "PROH • Заборона";
+        } else if (text.includes("OBLG") || text.toLowerCase().includes("обов'яз")) {
+          badgeElem.className = "badge badge-oblg";
+          badgeElem.textContent = "OBLG • Обов'язок";
+        } else if (text.includes("PERM") || text.toLowerCase().includes("дозвол")) {
+          badgeElem.className = "badge badge-perm";
+          badgeElem.textContent = "PERM • Дозвіл";
+        }
+
+        // 2. Парсинг дієслів у чипи
+        const lines = text.split('\n');
+        lines.forEach(line => {
+          if (line.includes("Знайдені дії:")) {
+            const rawActions = line.replace("Знайдені дії:", "").trim();
+            const actions = rawActions.split(",").map(a => a.trim()).filter(a => a.length > 0);
+
+            if (actions.length > 0) {
+              chipsWrapper.innerHTML = actions.map(action => `<span class="chip">${action}</span>`).join('');
+              chipsContainer.style.display = "block";
+            }
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

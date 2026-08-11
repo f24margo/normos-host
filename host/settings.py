@@ -1,3 +1,12 @@
+import os
+from dotenv import load_dotenv
+
+# Загружаем переменные из файла .env
+load_dotenv()
+
+# Считываем API-ключ
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 """
 Django settings for host project.
 
@@ -129,3 +138,12 @@ INSTALLED_APPS = [
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"          # или "workspace" — оба ведут на кабинет
 LOGOUT_REDIRECT_URL = "login"
+
+ALLOWED_HOSTS = [
+    'macbook-pro---nikolay.tailc8de92.ts.net',
+    'localhost',
+    '127.0.0.1',
+]
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = ['https://macbook-pro---nikolay.tailc8de92.ts.net']

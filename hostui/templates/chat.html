@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+  
+  <!-- 1. Переключатель ролей (Взаимоисключающий) -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body py-2 bg-light">
+      <label class="form-label d-block text-muted small fw-bold mb-2">ОБЕРІТЬ РОЛЬ АСИСТЕНТА:</label>
+      <div class="btn-group w-100" role="group" aria-label="Вибір ролі ІІ">
+        
+        <input type="radio" class="btn-check" name="ai_role" id="role_triz" value="triz" checked>
+        <label class="btn btn-outline-primary text-start" for="role_triz">
+          💡 <strong>ТРИЗ-інженер</strong>
+        </label>
+
+        <input type="radio" class="btn-check" name="ai_role" id="role_help" value="product_help">
+        <label class="btn btn-outline-primary text-start" for="role_help">
+          ❓ <strong>Довідка NormOS</strong>
+        </label>
+
+        <input type="radio" class="btn-check" name="ai_role" id="role_legal" value="legal_guardrail">
+        <label class="btn btn-outline-primary text-start" for="role_legal">
+          🛡️ <strong>Аудит ризиків</strong>
+        </label>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Окно сообщений -->
+  <div class="card shadow-sm mb-3">
+    <div id="chat-window" class="card-body overflow-auto" style="height: 450px; background-color: #f8f9fa;">
+      <div class="alert alert-secondary mb-2">
+        Вітаю! Оберіть роль зверху та поставте ваше запитання.
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Поле ввода -->
+  <div class="input-group">
+    <input type="text" id="chat-input" class="form-control" placeholder="Введіть повідомлення..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button class="btn btn-primary" onclick="sendMessage()">Надіслати</button>
+  </div>
+
+</div>
+
+<!-- 4. JavaScript логика -->
+<script>
+let chatHistory = [];
+
+function appendMessage(sender, text) {
+    const chatWindow = document.getElementById("chat-window");
+    const msgDiv = document.createElement("div");
+    msgDiv.className = sender === "user" 
+        ? "text-end mb-3" 
+        : "text-start mb-3";
+    
+    // Заменили badge на d-inline-block с комфортным шрифтом (1rem = 16px)
+    const content = sender === "user"
+        ? '<div class="p-3 bg-primary text-white rounded-3 text-start d-inline-block shadow-sm" style="max-width: 80%; white-space: pre-line; font-size: 0.95rem;">' + text + '</div>'
+        : '<div class="p-3 bg-white text-dark border rounded-3 text-start d-inline-block shadow-sm" style="max-width: 85%; white-space: pre-line; font-size: 1rem; line-height: 1.5;">' + text + '</div>';
+
+    msgDiv.innerHTML = content;
+    chatWindow.appendChild(msgDiv);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+async function sendMessage() {
+    const inputElement = document.getElementById("chat-input");
+    const messageText = inputElement.value.trim();
+    if (!messageText) return;
+
+    // Считываем строго одну активную роль
+    const selectedRole = document.querySelector('input[name="ai_role"]:checked').value;
+
+    appendMessage("user", messageText);
+    inputElement.value = "";
+
+    try {
+        const response = await fetch("/api/chat/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({
+                message: messageText,
+                role: selectedRole,
+                history: chatHistory
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            appendMessage("assistant", data.reply);
+            
+            // Сохраняем в локальную историю
+            chatHistory.push({ role: "user", parts: [messageText] });
+            chatHistory.push({ role: "model", parts: [data.reply] });
+        } else {
+            appendMessage("assistant", "⚠️ Помилка: " + (data.error || "Невідома помилка"));
+        }
+    } catch (err) {
+        appendMessage("assistant", "⚠️ Помилка з'єднання з сервером.");
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
