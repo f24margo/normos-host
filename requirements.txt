@@ -1,0 +1,9 @@
+Django>=4.2,<5.0
+google-generativeai
+python-dotenv
+requests
+pydantic
+pandas
+spacy
+pymorphy3
+git+https://github.com/f24margo/normos-lab-demo.git
