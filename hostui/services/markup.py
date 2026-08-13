@@ -4,6 +4,7 @@ from hostui.services.parser import normalize_text, split_into_clauses
 from hostui.services.roles import find_agent_forms_in_text
 from hostui.services.triplets import build_clause_triplets
 from hostui.services.recommender import generate_recommendations
+from hostui.services.graph import build_norm_graph
 
 MODALITY_PATTERNS = [
     # 1. Запреты (PROH)
@@ -245,14 +246,16 @@ def analyze_document_pipeline(text: str, layers: list = None, registry: Registry
 
     spans.sort(key=lambda x: (x["start"], -(x["end"] - x["start"])))
 
-    # Генерируем рекомендации
+    # Генерируем рекомендации и граф
     recommendations = generate_recommendations(triplets)
+    graph_data = build_norm_graph(triplets)
 
     return {
         "text": text,
         "active_layers": layers,
         "spans": spans,
         "triplets": triplets,
+        "graph": graph_data,
         "recommendations": recommendations,
         "metrics": {
             "strict_coverage": round(strict_coverage, 1),
