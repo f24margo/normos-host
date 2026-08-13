@@ -3,61 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NormOS — Инспектор слоев</title>
+    <title>NormOS — Робочий простір</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #f4f6f8; color: #333; }
-        .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; }
-        .main-panel { flex: 2; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .side-panel { flex: 1; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #333; overflow: hidden; }
         
-        textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
-        button { background: #0066cc; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-        button:hover { background: #0052a3; }
+        .navbar { display: flex; align-items: center; justify-content: space-between; background: #1f2937; color: #fff; padding: 10px 20px; height: 50px; }
+        .navbar-brand { font-weight: 700; font-size: 16px; color: #38bdf8; text-decoration: none; }
+        .navbar-menu { display: flex; gap: 15px; }
+        .navbar-link { color: #d1d5db; text-decoration: none; font-size: 14px; font-weight: 500; padding: 6px 12px; border-radius: 4px; transition: background 0.2s; }
+        .navbar-link:hover, .navbar-link.active { background: #374151; color: #fff; }
 
-        /* Панель слоев */
-        .layers-bar { display: flex; gap: 12px; margin: 15px 0; padding: 10px; background: #f0f4f8; border-radius: 6px; flex-wrap: wrap; }
+        .container { display: flex; gap: 20px; height: calc(100vh - 70px); max-width: 1600px; margin: 10px auto; padding: 0 15px; }
+        
+        .main-panel { flex: 2; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
+        .side-panel { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
+        
+        .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        
+        textarea { width: 100%; height: 90px; min-height: 90px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; }
+        
+        button, .btn-label { background: #0066cc; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+        button:hover, .btn-label:hover { background: #0052a3; }
+        .btn-secondary { background: #2da44e; }
+        .btn-secondary:hover { background: #2c974b; }
+        .btn-sm { padding: 3px 8px; font-size: 11px; background: #6b7280; }
+        .btn-sm:hover { background: #4b5563; }
+        
+        .layers-bar { display: flex; gap: 12px; margin: 8px 0; padding: 8px 12px; background: #f0f4f8; border-radius: 6px; align-items: center; flex-wrap: wrap; }
         .layer-label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
-        /* Стили подсветки */
-        .editor-output { border: 1px solid #e1e4e8; padding: 15px; border-radius: 6px; min-height: 180px; white-space: pre-wrap; line-height: 1.6; font-size: 15px; background: #fafafa; }
+        .editor-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        .editor-output { flex: 1; overflow-y: auto; border: 1px solid #e1e4e8; padding: 15px; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; font-size: 15px; background: #fafafa; }
         
-        .layer-verb { background-color: #ffeef0; color: #b31d28; border-bottom: 2px solid #fdaeb7; padding: 2px 4px; border-radius: 3px; }
-        .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 2px 4px; border-radius: 3px; }
-        .layer-obl { background-color: #fff8c5; color: #9a6700; border-bottom: 2px solid #d4a72c; padding: 2px 4px; border-radius: 3px; }
+        .highlight-span { cursor: pointer; transition: opacity 0.2s; margin: 0 1px; }
+        .highlight-span:hover { opacity: 0.85; outline: 1px solid #333; }
+
+        /* Базовий шар Дій (Нейтральний) */
+        .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; border-radius: 3px; }
+        .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; border-radius: 3px; }
+        
+        /* Шар Модальності (Рамки) */
+        .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+        .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+        .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+
+        /* Шар Ролей (Спеціальний серый фон с индиго-текстом без рамок) */
+        .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; border-radius: 3px; }
+
+        .inspector-body { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .card-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 12px; margin-top: 10px; }
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px; margin-bottom: 10px; font-size: 13px; }
+        
+        .triplet-box { background: #fff; border-left: 4px solid #4f46e5; border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .oov-item { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; padding: 4px 0; border-bottom: 1px dashed #e5e7eb; font-size: 13px; }
+        .active-card { border: 2px solid #2563eb; background: #f0f9ff; }
     </style>
 </head>
 <body>
 
+<nav class="navbar">
+    <a href="/workspace/" class="navbar-brand">NormOS Lab</a>
+    <div class="navbar-menu">
+        <a href="/workspace/" class="navbar-link active">Робочий простір</a>
+        <a href="/chat/" class="navbar-link">Чат</a>
+        <a href="/documents/" class="navbar-link">Документи</a>
+    </div>
+</nav>
+
 <div class="container">
     <div class="main-panel">
-        <h2>Нормативный текст</h2>
-        <textarea id="inputText" placeholder="Вставьте текст нормативного акта..."></textarea>
-        <button onclick="runAnalysis()">Проанализировать</button>
+        <h2 style="margin: 0 0 8px 0; font-size: 16px;">Нормативний текст</h2>
+        
+        <textarea id="inputText" placeholder="Вставте текст або завантажте файл..."></textarea>
+        
+        <div class="toolbar">
+            <button onclick="runAnalysis()">⚡ Проаналізувати</button>
+            <label class="btn-label">
+                📁 Завантажити файл
+                <input type="file" id="fileInput" accept=".txt,.md,.json" style="display: none;" onchange="handleFileUpload(event)">
+            </label>
+            <button class="btn-secondary" onclick="exportAnnotatedDocument()">💾 Експортувати HTML</button>
+        </div>
 
         <div class="layers-bar">
             <label class="layer-label">
-                <input type="checkbox" id="layerVerbs" checked onchange="renderHighlights()"> 🔴 Действия (Verbs)
+                <input type="checkbox" id="layerVerbs" checked onchange="renderHighlights()"> ⚙️ Дії (Verbs)
             </label>
             <label class="layer-label">
-                <input type="checkbox" id="layerMSU" checked onchange="renderHighlights()"> 🔵 Нормы МСУ (Cards)
+                <input type="checkbox" id="layerModality" checked onchange="renderHighlights()"> 🟡 Модальність (NKS-012)
             </label>
             <label class="layer-label">
-                <input type="checkbox" id="layerModality" checked onchange="renderHighlights()"> 🟡 Модальность (Obligation)
+                <input type="checkbox" id="layerRoles" checked onchange="renderHighlights()"> 🏷️ Ролі (Roles)
+            </label>
+            <label class="layer-label">
+                <input type="checkbox" id="layerMSU" checked onchange="renderHighlights()"> 🔵 Норми МСУ (Cards)
             </label>
         </div>
 
-        <h3>Размеченный текст</h3>
-        <div id="editorOutput" class="editor-output">Введите текст и нажмите «Проанализировать»...</div>
+        <div class="editor-container">
+            <h3 style="margin: 0 0 6px 0; font-size: 13px; color: #555;">Розмічений документ:</h3>
+            <div id="editorOutput" class="editor-output">Введіть текст або завантажте файл та натисніть «Проаналізувати»...</div>
+        </div>
     </div>
 
     <div class="side-panel">
-        <h2>Инспектор</h2>
-        <div id="inspectorContent">Выберите фрагмент или запутите анализ.</div>
+        <h2 style="margin: 0 0 10px 0; font-size: 16px;">Інспектор</h2>
+        <div id="inspectorContent" class="inspector-body">
+            Запустіть аналіз для відображення триплетів, модальності та кандидатів OOV.
+        </div>
     </div>
 </div>
 
 <script>
-let currentData = { text: "", spans: [] };
+let currentData = { text: "", spans: [], triplets: [] };
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById("inputText").value = e.target.result;
+    };
+    reader.readAsText(file, "UTF-8");
+}
 
 async function runAnalysis() {
     const text = document.getElementById("inputText").value;
@@ -74,21 +144,130 @@ async function runAnalysis() {
 
     currentData = await response.json();
     renderHighlights();
-    
-    document.getElementById("inspectorContent").innerHTML = `
-        <p><b>Найдено совпадений:</b> ${currentData.spans ? currentData.spans.length : 0}</p>
-        <p><b>Задействовано карточек:</b> ${currentData.matched_cards_count || 0}</p>
+    renderInspectorData();
+}
+
+function renderInspectorData(selectedSpan = null) {
+    const m = currentData.metrics || {};
+    const oov = currentData.oov || { forms: [], lemmas: [] };
+    const triplets = currentData.triplets || [];
+
+    let selectedHtml = "";
+    if (selectedSpan) {
+        selectedHtml = `
+            <div class="card-box active-card">
+                <h4 style="margin: 0 0 6px 0; font-size: 14px; color: #1e3a8a;">🔍 Деталі спану</h4>
+                <div style="font-size: 13px; line-height: 1.5;">
+                    <b>Шар:</b> ${selectedSpan.layer}<br>
+                    <b>Текст:</b> «${escapeHtml(currentData.text.slice(selectedSpan.start, selectedSpan.end))}»<br>
+                    ${selectedSpan.lemma ? `<b>Лема ролі:</b> ${selectedSpan.lemma}<br>` : ''}
+                    ${selectedSpan.category ? `<b>Категорія:</b> ${selectedSpan.category}<br>` : ''}
+                    ${selectedSpan.marker ? `<b>Маркер:</b> ${selectedSpan.marker}<br>` : ''}
+                    ${selectedSpan.modality_source ? `<b>Джерело:</b> <code>${selectedSpan.modality_source}</code><br>` : ''}
+                    ${selectedSpan.card_id ? `<b>Card ID:</b> ${selectedSpan.card_id}<br>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    let html = `
+        ${selectedHtml}
+        <div class="info-box">
+            <b>Охоплення реєстру:</b> ${m.strict_coverage || 0}% 
+            <span style="color: #666; font-size: 12px;">(+${m.root_bonus || 0}% з кореневих)</span>
+            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                Збігів: ${m.exact_hits || 0} | Кореневих: ${m.root_hits || 0} | Кандидатів: ${m.normative_candidates || 0}
+            </div>
+        </div>
+
+        <div class="card-box">
+            <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #4f46e5;">📐 Нормативні Триплети ⟨S, M, A⟩</h4>
+            ${renderTripletsList(triplets)}
+        </div>
+
+        <div class="card-box" style="margin-top: 10px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #1e40af;">🟡 Невідомі форми (відома лемма)</h4>
+            ${renderOOVList(oov.forms, 'form')}
+        </div>
+
+        <div class="card-box" style="margin-top: 10px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #b91c1c;">🔴 Нові нормативні леми (OOV)</h4>
+            ${renderOOVList(oov.lemmas, 'lemma')}
+        </div>
     `;
+
+    document.getElementById("inspectorContent").innerHTML = html;
+}
+
+function renderTripletsList(triplets) {
+    if (!triplets || triplets.length === 0) {
+        return `<div style="font-size: 12px; color: #9ca3af;">Триплетів не сформовано</div>`;
+    }
+
+    return triplets.map(t => {
+        const subjText = t.subject ? `<b>${escapeHtml(t.subject)}</b>` : `<span style="color: #9ca3af; font-style: italic;">не вказано (загальна норма)</span>`;
+        const cardsText = t.cards && t.cards.length > 0 ? t.cards.map(c => `<span style="background: #ddf4ff; color: #0969da; padding: 1px 4px; border-radius: 3px; font-size: 11px;">${c}</span>`).join(' ') : '';
+        const depsText = t.depends_on && t.depends_on.length > 0 ? `<div style="font-size: 11px; color: #b45309; margin-top: 4px;">⚠️ <b>Залежить від:</b> ${t.depends_on.join(', ')}</div>` : '';
+
+        return `
+            <div class="triplet-box">
+                <div style="font-size: 13px; font-weight: 500;">
+                    ${subjText} ➔ <span style="color: #d97706; font-weight: 600;">[${t.modality}]</span> ➔ <b>${escapeHtml(t.action)}</b>
+                </div>
+                <div style="font-size: 11px; color: #6b7280; margin-top: 3px;">
+                    Маркер: <code>${escapeHtml(t.marker)}</code> (${t.modality_source}) ${cardsText}
+                </div>
+                ${depsText}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderOOVList(items, type) {
+    if (!items || items.length === 0) {
+        return `<div style="font-size: 12px; color: #9ca3af;">Кандидатів не знайдено</div>`;
+    }
+
+    return items.map(item => `
+        <div class="oov-item">
+            <span><b>${escapeHtml(item.word)}</b> <small style="color: #6b7280;">(${item.count})</small></span>
+            <button class="btn-sm" id="btn-oov-${escapeHtml(item.word)}" onclick="proposeOOV('${escapeHtml(item.word)}', '${type}')">Запропонувати</button>
+        </div>
+    `).join('');
+}
+
+async function proposeOOV(lemma, type) {
+    const btn = document.getElementById(`btn-oov-${lemma}`);
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Надсилання...";
+    }
+
+    const response = await fetch("/api/propose_oov/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lemma: lemma, type: type })
+    });
+
+    const res = await response.json();
+    if (res.status === "success" && btn) {
+        btn.innerText = "Надіслано (pending)";
+        btn.style.background = "#10b981";
+    }
 }
 
 function renderHighlights() {
     if (!currentData.text) return;
 
     const showVerbs = document.getElementById("layerVerbs").checked;
+    const showModality = document.getElementById("layerModality").checked;
+    const showRoles = document.getElementById("layerRoles").checked;
     const showMSU = document.getElementById("layerMSU").checked;
 
     const activeSpans = (currentData.spans || []).filter(s => {
         if (s.layer === "verbs" && !showVerbs) return false;
+        if (s.layer === "modality" && !showModality) return false;
+        if (s.layer === "roles" && !showRoles) return false;
         if (s.layer === "msu" && !showMSU) return false;
         return true;
     });
@@ -97,17 +276,73 @@ function renderHighlights() {
     let html = "";
     let lastIdx = 0;
 
-    activeSpans.forEach(span => {
+    activeSpans.forEach((span, idx) => {
         if (span.start >= lastIdx) {
             html += escapeHtml(text.slice(lastIdx, span.start));
             const chunk = escapeHtml(text.slice(span.start, span.end));
-            html += `<span class="${span.class}" title="${span.label}">${chunk}</span>`;
+            html += `<span class="${span.class} highlight-span" onclick="inspectSpan(${idx})" title="${span.label}">${chunk}</span>`;
             lastIdx = span.end;
         }
     });
     html += escapeHtml(text.slice(lastIdx));
 
     document.getElementById("editorOutput").innerHTML = html;
+}
+
+function inspectSpan(idx) {
+    const showVerbs = document.getElementById("layerVerbs").checked;
+    const showModality = document.getElementById("layerModality").checked;
+    const showRoles = document.getElementById("layerRoles").checked;
+    const showMSU = document.getElementById("layerMSU").checked;
+
+    const activeSpans = (currentData.spans || []).filter(s => {
+        if (s.layer === "verbs" && !showVerbs) return false;
+        if (s.layer === "modality" && !showModality) return false;
+        if (s.layer === "roles" && !showRoles) return false;
+        if (s.layer === "msu" && !showMSU) return false;
+        return true;
+    });
+
+    if (activeSpans[idx]) {
+        renderInspectorData(activeSpans[idx]);
+    }
+}
+
+function exportAnnotatedDocument() {
+    if (!currentData.text) {
+        alert("Спочатку проаналізуйте документ!");
+        return;
+    }
+    const outputHtml = document.getElementById("editorOutput").innerHTML;
+    const fullHtml = `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>NormOS Exported Document</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; line-height: 1.6; max-width: 900px; margin: 0 auto; color: #222; }
+        .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; border-radius: 3px; }
+        .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; border-radius: 3px; }
+        .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+        .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+        .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+        .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h2>Розмічений нормативний документ</h2>
+    <hr>
+    <div style="white-space: pre-wrap;">${outputHtml}</div>
+</body>
+</html>`;
+
+    const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "normos_annotated_document.html";
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function escapeHtml(str) {

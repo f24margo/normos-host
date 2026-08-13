@@ -1,0 +1,20 @@
+{
+  "вживати": {
+    "lemma": "вживати",
+    "type": "lemma",
+    "count": 1,
+    "sources": [
+      "host_ui"
+    ],
+    "disposition": "pending"
+  },
+  "закликати": {
+    "lemma": "закликати",
+    "type": "lemma",
+    "count": 1,
+    "sources": [
+      "host_ui"
+    ],
+    "disposition": "pending"
+  }
+}
