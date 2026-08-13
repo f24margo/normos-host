@@ -4,11 +4,21 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, FileResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from hostui.services import ask_gemini
+from hostui.services.normos import analyze_document
 
 
 def workspace_page(request):
     """Головна сторінка робочого простору (Fast-Check)."""
-    return render(request, "workspace.html")
+    context = {}
+    if request.method == "POST":
+        input_text = request.POST.get("text", "")
+        context["result"] = analyze_document(
+            input_text, 
+            user=request.user if request.user.is_authenticated else None
+        )
+        context["input_text"] = input_text
+
+    return render(request, "workspace.html", context)
 
 
 def chat_page(request):

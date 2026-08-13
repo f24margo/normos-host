@@ -17,6 +17,7 @@ urlpatterns = [
     # Основные разделы
     path('workspace/', views.workspace_page, name='workspace'),
     path('chat/', views.chat_page, name='chat_page'),
+    path('api/chat/', views.chat_page, name='api_chat'),  # <-- ДОБАВЛЕНА ЭТА СТРОКА
     
     # Раздел документов
     path('documents/', views.documents_page, name='documents_page'),

@@ -15,60 +15,56 @@
     * { box-sizing: border-box; }
     body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: #1e293b; display: flex; min-height: 100vh; }
 
-    /* Бокове меню */
-    .sidebar { width: var(--sidebar-width); background: #ffffff; border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+    /* Боковое меню */
+    .sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); background: #ffffff; border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: sticky; top: 0; }
     .logo { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 2rem; padding-left: 0.5rem; }
     .nav-menu { list-style: none; padding: 0; margin: 0; }
     .nav-item { margin-bottom: 0.25rem; }
     .nav-link { display: block; padding: 0.6rem 0.8rem; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 0.95rem; }
     .nav-link:hover, .nav-link.active { background: #eff6ff; color: var(--primary); }
+    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; color: #64748b; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+    .btn-logout:hover { background: #f1f5f9; color: #0f172a; }
 
-    /* Основна область */
-    .main-content { flex: 1; padding: 2rem; max-width: 960px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+    /* Основная область */
+    .main-wrapper { flex: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
     .user-info { font-size: 0.9rem; color: #64748b; }
 
-    /* Форма та картки */
-    .card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    textarea { width: 100%; min-height: 180px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.95rem; line-height: 1.5; margin-top: 0.5rem; resize: vertical; }
+    .workspace-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; align-items: start; }
+
+    /* Редактор */
+    .card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    textarea { width: 100%; height: 340px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.95rem; line-height: 1.5; margin-top: 0.5rem; resize: vertical; }
     textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,102,204,0.1); }
     
-    .btn-primary { background: var(--primary); color: white; border: none; padding: 0.64rem 1.4rem; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.75rem; font-size: 0.95rem; }
+    .upload-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.75rem; }
+    .upload-zone:hover { border-color: var(--primary); background: #eff6ff; }
+
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 0.75rem 1.4rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; width: 100%; margin-top: 0.75rem; }
     .btn-primary:hover { background: #0052a3; }
-    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 6px; color: #64748b; cursor: pointer; }
 
-    /* Блок результатів */
-    .result-card { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
+    /* Правая панель результатов */
+    .results-sidebar { display: flex; flex-direction: column; gap: 1rem; }
+    .result-card { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
     
-    /* Бейджі режимів */
-    .badge { display: inline-flex; align-items: center; font-weight: 700; font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .badge-proh { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge { display: inline-flex; align-items: center; font-weight: 700; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; }
     .badge-oblg { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-    .badge-perm { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-    .badge-info { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
 
-    /* Чипи дієслів */
-    .chips-container { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
-    .chip-title { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 8px; display: block; }
-    .chips-wrapper { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip { display: inline-block; background-color: #f1f5f9; color: #334155; padding: 5px 12px; border-radius: 16px; font-size: 0.85rem; font-weight: 500; border: 1px solid #e2e8f0; transition: all 0.2s ease; }
-    .chip:hover { background-color: #e2e8f0; border-color: #cbd5e1; color: #0f172a; }
+    .hint-box { font-size: 0.85rem; padding: 0.6rem 0.8rem; border-radius: 6px; margin-bottom: 0.5rem; line-height: 1.4; }
+    .hint-info { background: #f0f9ff; border-left: 3px solid #0284c7; color: #0369a1; }
 
-    .result-details-text { background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #f1f5f9; font-family: inherit; font-size: 0.95rem; line-height: 1.6; color: #334155; white-space: pre-wrap; margin-top: 0.75rem; }
+    .norm-card { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid var(--primary); border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem; }
+    
+    .disclaimer { font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 1.5rem; }
 
-    .disclaimer { font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 2rem; }
-
-    @media (max-width: 768px) {
-      body { flex-direction: column; }
-      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-      .main-content { padding: 1rem; }
+    @media (max-width: 1024px) {
+      .workspace-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Навігаційне меню -->
+  <!-- 1. Левое боковое меню -->
   <aside class="sidebar">
     <div>
       <div class="logo">NormOS Host</div>
@@ -89,19 +85,17 @@
       </ul>
     </div>
 
-    <!-- Кнопка виходу -->
+    <!-- Авторизация и кнопка выхода -->
     <form method="post" action="{% url 'logout' %}">
       {% csrf_token %}
       <button type="submit" class="btn-logout" style="width: 100%;">Вийти з акаунту</button>
     </form>
   </aside>
 
-  <!-- Основний контент -->
-  <main class="main-content">
+  <!-- 2. Основная рабочая область -->
+  <div class="main-wrapper">
     <header class="header">
-      <div>
-        <h1 style="margin: 0; font-size: 1.5rem;">Робочий простір</h1>
-      </div>
+      <h1 style="margin: 0; font-size: 1.4rem;">Робочий простір</h1>
       <div class="user-info">
         <strong>{{ user.username }}</strong>
         {% if profile %}
@@ -110,86 +104,136 @@
       </div>
     </header>
 
-    <!-- Форма аналізу -->
-    <section class="card">
-      <h2 style="margin-top: 0; font-size: 1.1rem; color: #0f172a;">Експрес-перевірка документа</h2>
-      <form method="post" action="{% url 'workspace' %}">
-        {% csrf_token %}
-        <label for="text" style="font-size: 0.9rem; color: #475569;">Вставте текст (регламент, рішення, проєкт акта):</label>
-        <textarea id="text" name="text" placeholder="Вставте текст для аналізу...">{{ text }}</textarea>
-        <button type="submit" class="btn-primary">Запустити перевірку</button>
-      </form>
+    <div class="workspace-grid">
+      
+      <!-- Ввод текста и загрузка файла -->
+      <section class="card">
+        <h2 style="margin-top: 0; font-size: 1.1rem; color: #0f172a;">Експрес-перевірка документа</h2>
+        
+        <form method="post" action="{% url 'workspace' %}">
+          {% csrf_token %}
+          
+          <!-- Зона загрузки файла в окно -->
+          <div class="upload-zone" onclick="document.getElementById('file-input').click();">
+            <span style="font-size: 0.9rem; color: #475569;">
+              📁 Натисніть для вибору файла (<strong>.txt, .docx</strong>), щоб завантажити його у текстове поле
+            </span>
+            <input type="file" 
+                   id="file-input" 
+                   style="display: none;" 
+                   accept=".txt,.docx"
+                   onchange="handleFileSelect(event)">
+            <div id="file-name" style="font-weight: 600; margin-top: 6px; color: var(--primary); font-size: 0.85rem;"></div>
+          </div>
 
-      {% if result %}
-      <div class="result-card">
-        <div class="result-header">
-          <span id="modality-badge" class="badge badge-info">Аналіз</span>
-          <h3 style="margin: 0; font-size: 1.1rem; color: #0f172a;">{{ result.headline }}</h3>
-        </div>
+          <!-- Окно редактора -->
+          <label for="text" style="font-size: 0.85rem; color: #64748b;">Текст проєкту рішення або регламенту (можна редагувати):</label>
+          <textarea id="text" name="text" placeholder="Вставте або завантажте текст для аналізу...">{{ text }}</textarea>
+          
+          <button type="submit" class="btn-primary">Запустити перевірку</button>
+        </form>
 
-        {% if result.details %}
-        <div id="raw-details" class="result-details-text">{{ result.details }}</div>
+        <p class="disclaimer">
+          Це не юридична консультація і не висновок про законність документа. Відповідальність за рішення залишається за користувачем.
+        </p>
+      </section>
+
+      <!-- Правая панель результатов -->
+      <aside class="results-sidebar">
+        {% if result %}
+          {% if result.ok %}
+            
+            <!-- Вердикт -->
+            <div class="result-card">
+              <span class="badge badge-oblg">{{ result.verdict.modality|default:"OBLG" }}</span>
+              <h3 style="margin: 0.6rem 0 0.3rem 0; font-size: 1rem; color: #0f172a;">{{ result.verdict.headline }}</h3>
+              <p style="font-size: 0.85rem; color: #475569; margin: 0;">
+                Дія: <strong>{{ result.verdict.deciding_verb }}</strong><br>
+                Суб'єкт: <strong>{{ result.verdict.agent }}</strong>
+              </p>
+            </div>
+
+            <!-- Подсказки -->
+            {% if result.hints %}
+            <div class="result-card">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block; margin-bottom: 0.5rem; text-transform: uppercase;">Підказки системи</span>
+              {% for hint in result.hints %}
+                <div class="hint-box hint-{{ hint.level|default:'info' }}">{{ hint.text }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Карточки норм -->
+            {% if result.cards %}
+            <div class="result-card">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; letter-spacing: 0.5px; display: block; margin-bottom: 0.5rem; text-transform: uppercase;">Знайдені норми ({{ result.cards|length }})</span>
+              {% for card in result.cards %}
+                <div class="norm-card">
+                  <div style="font-weight: 700; font-size: 0.85rem; color: #0f172a;">{{ card.id }} • {{ card.title }}</div>
+                  {% if card.source.text_quote %}
+                    <div style="font-size: 0.78rem; color: #475569; font-style: italic; margin-top: 4px;">"{{ card.source.text_quote|truncatechars:100 }}"</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          {% else %}
+            <!-- Ошибка -->
+            <div class="result-card" style="border-color: #fca5a5; background: #fef2f2; color: #991b1b; font-size: 0.9rem;">
+              {{ result.error }}
+            </div>
+          {% endif %}
+        {% else %}
+          <!-- Пустое состояние -->
+          <div class="result-card" style="text-align: center; color: #94a3b8; padding: 2.5rem 1rem; font-size: 0.9rem;">
+            Завантажте файл або введіть текст ліворуч, щоб побачити аналіз та підказки.
+          </div>
         {% endif %}
+      </aside>
 
-        <!-- Контейнер для чипів дієслів -->
-        <div id="chips-container" class="chips-container" style="display: none;">
-          <span class="chip-title">Знайдені юридичні дії (дієслова):</span>
-          <div id="chips-wrapper" class="chips-wrapper"></div>
-        </div>
+    </div>
+  </div>
 
-        {% if result.char_count is not None %}
-        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #64748b; border-top: 1px solid var(--border); padding-top: 0.75rem;">
-          <span>⚡ Аналіз завершено успішно</span>
-          <span>Оброблено символів: <strong>{{ result.char_count }}</strong></span>
-        </div>
-        {% endif %}
-      </div>
-      {% endif %}
-    </section>
+  <!-- Библиотека Mammoth для чтение docx прямо в браузере -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
-    <p class="disclaimer">
-      Це не юридична консультація і не висновок про законність документа. Відповідальність за прийняті рішення залишається за користувачем.
-    </p>
-  </main>
-
-  <!-- Скрипт візуалізації чипів та кольорових бейджів -->
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const rawDetailsElem = document.getElementById("raw-details");
-      const chipsContainer = document.getElementById("chips-container");
-      const chipsWrapper = document.getElementById("chips-wrapper");
-      const badgeElem = document.getElementById("modality-badge");
+  function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-      if (rawDetailsElem) {
-        const text = rawDetailsElem.innerText;
+    const fileNameLabel = document.getElementById('file-name');
+    const textArea = document.getElementById('text');
+    fileNameLabel.textContent = 'Зчитано файл: ' + file.name;
 
-        // 1. Автоматичне визначення режиму та кольору бейджа
-        if (text.includes("PROH") || text.toLowerCase().includes("заборон")) {
-          badgeElem.className = "badge badge-proh";
-          badgeElem.textContent = "PROH • Заборона";
-        } else if (text.includes("OBLG") || text.toLowerCase().includes("обов'яз")) {
-          badgeElem.className = "badge badge-oblg";
-          badgeElem.textContent = "OBLG • Обов'язок";
-        } else if (text.includes("PERM") || text.toLowerCase().includes("дозвол")) {
-          badgeElem.className = "badge badge-perm";
-          badgeElem.textContent = "PERM • Дозвіл";
-        }
+    const fileExt = file.name.split('.').pop().toLowerCase();
 
-        // 2. Парсинг дієслів у чипи
-        const lines = text.split('\n');
-        lines.forEach(line => {
-          if (line.includes("Знайдені дії:")) {
-            const rawActions = line.replace("Знайдені дії:", "").trim();
-            const actions = rawActions.split(",").map(a => a.trim()).filter(a => a.length > 0);
-
-            if (actions.length > 0) {
-              chipsWrapper.innerHTML = actions.map(action => `<span class="chip">${action}</span>`).join('');
-              chipsContainer.style.display = "block";
-            }
-          }
-        });
-      }
-    });
+    if (fileExt === 'txt') {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        textArea.value = e.target.result;
+      };
+      reader.readAsText(file, 'UTF-8');
+    } 
+    else if (fileExt === 'docx') {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const arrayBuffer = e.target.result;
+        mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+          .then(function(result) {
+            textArea.value = result.value;
+          })
+          .catch(function(err) {
+            alert('Помилка зчитування .docx файла: ' + err.message);
+          });
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      alert('Оберіть файл формата .txt або .docx');
+    }
+  }
   </script>
+
 </body>
 </html>

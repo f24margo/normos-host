@@ -1,125 +1,174 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ШІ-Консультант — NormOS Host</title>
+  <style>
+    :root {
+      --primary: #0066cc;
+      --bg: #f8f9fa;
+      --sidebar-width: 240px;
+      --border: #e2e8f0;
+    }
 
-{% block content %}
-<div class="container py-4" style="max-width: 900px;">
-  
-  <!-- 1. Переключатель ролей (Взаимоисключающий) -->
-  <div class="card mb-3 shadow-sm">
-    <div class="card-body py-2 bg-light">
-      <label class="form-label d-block text-muted small fw-bold mb-2">ОБЕРІТЬ РОЛЬ АСИСТЕНТА:</label>
-      <div class="btn-group w-100" role="group" aria-label="Вибір ролі ІІ">
-        
-        <input type="radio" class="btn-check" name="ai_role" id="role_triz" value="triz" checked>
-        <label class="btn btn-outline-primary text-start" for="role_triz">
-          💡 <strong>ТРИЗ-інженер</strong>
-        </label>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: var(--bg); color: #1e293b; display: flex; min-height: 100vh; }
 
-        <input type="radio" class="btn-check" name="ai_role" id="role_help" value="product_help">
-        <label class="btn btn-outline-primary text-start" for="role_help">
-          ❓ <strong>Довідка NormOS</strong>
-        </label>
+    /* Навигация */
+    .sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); background: #ffffff; border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: sticky; top: 0; }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-bottom: 2rem; padding-left: 0.5rem; }
+    .nav-menu { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 0.25rem; }
+    .nav-link { display: block; padding: 0.6rem 0.8rem; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 0.95rem; }
+    .nav-link:hover, .nav-link.active { background: #eff6ff; color: var(--primary); }
+    .btn-logout { background: transparent; border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; color: #64748b; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
 
-        <input type="radio" class="btn-check" name="ai_role" id="role_legal" value="legal_guardrail">
-        <label class="btn btn-outline-primary text-start" for="role_legal">
-          🛡️ <strong>Аудит ризиків</strong>
-        </label>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- 2. Окно сообщений -->
-  <div class="card shadow-sm mb-3">
-    <div id="chat-window" class="card-body overflow-auto" style="height: 450px; background-color: #f8f9fa;">
-      <div class="alert alert-secondary mb-2">
-        Вітаю! Оберіть роль зверху та поставте ваше запитання.
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. Поле ввода -->
-  <div class="input-group">
-    <input type="text" id="chat-input" class="form-control" placeholder="Введіть повідомлення..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button class="btn btn-primary" onclick="sendMessage()">Надіслати</button>
-  </div>
-
-</div>
-
-<!-- 4. JavaScript логика -->
-<script>
-let chatHistory = [];
-
-function appendMessage(sender, text) {
-    const chatWindow = document.getElementById("chat-window");
-    const msgDiv = document.createElement("div");
-    msgDiv.className = sender === "user" 
-        ? "text-end mb-3" 
-        : "text-start mb-3";
+    /* Основной блок */
+    .main-wrapper { flex: 1; padding: 1.5rem 2rem; display: flex; flex-direction: column; height: 100vh; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
     
-    // Заменили badge на d-inline-block с комфортным шрифтом (1rem = 16px)
-    const content = sender === "user"
-        ? '<div class="p-3 bg-primary text-white rounded-3 text-start d-inline-block shadow-sm" style="max-width: 80%; white-space: pre-line; font-size: 0.95rem;">' + text + '</div>'
-        : '<div class="p-3 bg-white text-dark border rounded-3 text-start d-inline-block shadow-sm" style="max-width: 85%; white-space: pre-line; font-size: 1rem; line-height: 1.5;">' + text + '</div>';
+    /* Контейнер чата */
+    .chat-container { flex: 1; display: flex; flex-direction: column; background: #ffffff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    
+    /* Баннер ТРИЗ и статуса */
+    .chat-header { background: #f1f5f9; padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .triz-badge { background: #dbeafe; color: #1e40af; font-weight: 700; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; }
+    .plan-badge { background: #fef3c7; color: #92400e; font-weight: 600; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; border: 1px solid #fde68a; }
 
-    msgDiv.innerHTML = content;
-    chatWindow.appendChild(msgDiv);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-}
+    /* Сообщения */
+    .chat-messages { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .msg { max-width: 80%; padding: 0.8rem 1rem; border-radius: 10px; font-size: 0.93rem; line-height: 1.5; }
+    .msg-ai { background: #f8fafc; border: 1px solid var(--border); align-self: flex-start; color: #0f172a; }
+    .msg-user { background: var(--primary); color: #ffffff; align-self: flex-end; }
 
-async function sendMessage() {
-    const inputElement = document.getElementById("chat-input");
-    const messageText = inputElement.value.trim();
-    if (!messageText) return;
+    /* Быстрые подсказки */
+    .suggestions { display: flex; gap: 0.5rem; padding: 0.5rem 1.25rem; background: #ffffff; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .chip { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 16px; padding: 0.3rem 0.8rem; font-size: 0.82rem; color: #334155; cursor: pointer; transition: all 0.2s; }
+    .chip:hover { background: #e2e8f0; color: var(--primary); }
 
-    // Считываем строго одну активную роль
-    const selectedRole = document.querySelector('input[name="ai_role"]:checked').value;
+    /* Поле ввода */
+    .chat-input-area { padding: 1rem 1.25rem; background: #ffffff; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; }
+    .chat-input { flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+    .chat-input:focus { outline: none; border-color: var(--primary); }
+    .btn-send { background: var(--primary); color: white; border: none; padding: 0 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-send:hover { background: #0052a3; }
+  </style>
+</head>
+<body>
 
-    appendMessage("user", messageText);
-    inputElement.value = "";
+  <!-- Левое меню -->
+  <aside class="sidebar">
+    <div>
+      <div class="logo">NormOS Host</div>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{% url 'workspace' %}" class="nav-link">⚡ Швидка перевірка</a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'chat_page' %}" class="nav-link active">🤖 ШІ-Консультант</a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'documents_page' %}" class="nav-link">📁 Документи</a>
+        </li>
+        <li class="nav-item"><a href="#" class="nav-link">📚 База норм</a></li>
+        <li class="nav-item">
+          <a href="https://uacommunityhub.wixstudio.com/normos-lab" target="_blank" class="nav-link">ℹ️ Довідка та підтримка</a>
+        </li>
+      </ul>
+    </div>
 
-    try {
-        const response = await fetch("/api/chat/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({
-                message: messageText,
-                role: selectedRole,
-                history: chatHistory
-            })
-        });
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-logout" style="width: 100%;">Вийти з акаунту</button>
+    </form>
+  </aside>
 
-        const data = await response.json();
+  <!-- Основная зона -->
+  <div class="main-wrapper">
+    <header class="header">
+      <h1 style="margin: 0; font-size: 1.4rem;">ШІ-Асистент NormOS</h1>
+      <span class="plan-badge">⭐ PRO / Enterprise (Roadmap)</span>
+    </header>
 
-        if (response.ok) {
-            appendMessage("assistant", data.reply);
-            
-            // Сохраняем в локальную историю
-            chatHistory.push({ role: "user", parts: [messageText] });
-            chatHistory.push({ role: "model", parts: [data.reply] });
-        } else {
-            appendMessage("assistant", "⚠️ Помилка: " + (data.error || "Невідома помилка"));
-        }
-    } catch (err) {
-        appendMessage("assistant", "⚠️ Помилка з'єднання з сервером.");
-    }
-}
+    <div class="chat-container">
+      
+      <!-- Шапка модуля чата -->
+      <div class="chat-header">
+        <div>
+          <strong>Модуль розв'язання колізій (ТРИЗ) & Довідка</strong>
+          <div style="font-size: 0.8rem; color: #64748b;">Аналіз нормативних суперечностей та допомога з роботою в системі</div>
+        </div>
+        <span class="triz-badge">ТРИЗ-Engine v1.0</span>
+      </div>
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-</script>
-{% endblock %}
+      <!-- История сообщений -->
+      <div class="chat-messages" id="chatHistory">
+        <div class="msg msg-ai">
+          Вітаю, <strong>{{ user.username }}</strong>! Я аналітичний асистент NormOS.<br><br>
+          Мої ключові можливості:
+          <br>1. <strong>ТРИЗ-аналіз:</strong> пошук та усунення колізій між рішеннями ради та законами України.
+          <br>2. <strong>Нормопроектування:</strong> допомога у формулюванні точних регуляторних формулювань.
+          <br>3. <strong>Інструкції:</strong> допомога з навігацією та завантаженням документів у NormOS.
+        </div>
+      </div>
+
+      <!-- Быстрые вопросы для демонстрации -->
+      <div class="suggestions">
+        <span class="chip" onclick="sendQuickPrompt('Як виявити колізію в регламенті за допомогою ТРИЗ?')">🎯 Пошук колізій (ТРИЗ)</span>
+        <span class="chip" onclick="sendQuickPrompt('Як завантажити проект рішення на перевірку?')">📖 Інструкція користувача</span>
+        <span class="chip" onclick="sendQuickPrompt('Як оформити передплату PRO?')">🔒 Тарифи та PRO-доступ</span>
+      </div>
+
+      <!-- Поле ввода -->
+      <div class="chat-input-area">
+        <input type="text" id="userInput" class="chat-input" placeholder="Задайте питання щодо ТРИЗ-аналізу або роботи з документами..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button class="btn-send" onclick="sendMessage()">Надіслати</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+  function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage(text, 'user');
+    input.value = '';
+
+    // Демо-ответ с имитацией вычислений
+    setTimeout(() => {
+      let reply = "Модуль ТРИЗ знаходиться у стадії розробки. В майбутній версії тут буде доступний автоматичний підбір альтернативних юридичних формулювань для усунення колізій.";
+      
+      const lower = text.toLowerCase();
+      if (lower.includes('триз') || lower.includes('коліз')) {
+        reply = "<strong>[ТРИЗ-Аналіз]:</strong> Метод передбачає виявлення оперативного часу та простору суперечності. Наприклад, якщо регламент зобов'язує прийняти рішення протягом 3 днів, а Закон вимагає 10 днів на обговорення, ТРИЗ пропонує поділ за умовами або введення проміжного протокольного рішення.";
+      } else if (lower.includes('інструкці') || lower.includes('завантажи')) {
+        reply = "<strong>[Довідка]:</strong> Перейдіть у раздел <strong>'⚡ Швидка перевірка'</strong>, натисніть на рамку вибору файла (.txt/.docx). Текст автоматично завантажиться у поле, після чого натисніть кнопку 'Запустити перевірку'.";
+      } else if (lower.includes('про') || lower.includes('тариф') || lower.includes('передплат')) {
+        reply = "<strong>[Платний доступ]:</strong> Розширений ТРИЗ-модуль та генерація юридичних висновків будуть доступні у плані Enterprise. Доступ оформлюється через адміністратора системи.";
+      }
+
+      addMessage(reply, 'ai');
+    }, 600);
+  }
+
+  function sendQuickPrompt(promptText) {
+    document.getElementById('userInput').value = promptText;
+    sendMessage();
+  }
+
+  function addMessage(text, type) {
+    const history = document.getElementById('chatHistory');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg ' + (type === 'user' ? 'msg-user' : 'msg-ai');
+    msgDiv.innerHTML = text;
+    history.appendChild(msgDiv);
+    history.scrollTop = history.scrollHeight;
+  }
+  </script>
+
+</body>
+</html>
