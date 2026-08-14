@@ -17,5 +17,6 @@
   "depends_on": [
     "N04"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "PERM"
 }

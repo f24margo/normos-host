@@ -15,5 +15,6 @@
     "N01",
     "N11"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "OBL"
 }

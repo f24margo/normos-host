@@ -15,5 +15,6 @@
   "depends_on": [
     "N22"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "OBL"
 }

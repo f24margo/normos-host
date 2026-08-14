@@ -16,5 +16,6 @@
     "N22",
     "N23"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "OBL"
 }

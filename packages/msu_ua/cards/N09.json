@@ -16,5 +16,6 @@
   "depends_on": [
     "N08"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "OBL"
 }

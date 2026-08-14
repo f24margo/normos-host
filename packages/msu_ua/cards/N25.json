@@ -16,5 +16,6 @@
   "depends_on": [
     "N01"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "OBL"
 }

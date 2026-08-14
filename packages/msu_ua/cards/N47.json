@@ -16,5 +16,6 @@
     "N01",
     "N46"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "PERM"
 }

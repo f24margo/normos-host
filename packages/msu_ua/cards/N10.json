@@ -15,5 +15,6 @@
   "depends_on": [
     "N05"
   ],
-  "status": "active"
+  "status": "active",
+  "default_modality": "PERM"
 }
