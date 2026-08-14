@@ -1,3 +1,18 @@
+
+<!-- === БЛОК 1: Переключатель пунктирных связей === -->
+<div class="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded border border-gray-200 my-2">
+  <input 
+    type="checkbox" 
+    id="toggleContextSubjects" 
+    checked 
+    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+  >
+  <label for="toggleContextSubjects" class="text-xs font-medium text-gray-700 cursor-pointer select-none">
+    Контекстні суб'єкти (пунктир)
+  </label>
+</div>
+<!-- === КОНЕЦ БЛОКА 1 === -->
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -398,3 +413,19 @@ function escapeJsString(str) {
 
 </body>
 </html>
+
+<script>
+// === БЛОК 2: Обработчик скрытия/показа пунктирных связей ===
+document.getElementById("toggleContextSubjects")?.addEventListener("change", function(e) {
+  const isChecked = e.target.checked;
+  if (window.edgesDataSet) {
+    const contextEdges = window.edgesDataSet.get({
+      filter: item => item.type === "context_subject"
+    });
+    contextEdges.forEach(edge => {
+      window.edgesDataSet.update({ id: edge.id, hidden: !isChecked });
+    });
+  }
+});
+// === КОНЕЦ БЛОКА 2 ===
+</script>

@@ -1,65 +1,83 @@
-def build_norm_graph(triplets: list) -> dict:
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Блок 1: Реестр базовых субъектов-хабов (всегда в нижнем регистре)
+KNOWN_HUBS = {
+    "рада",
+    "голова",
+    "комісія",
+    "депутат",
+    "виконавчий комітет",
+    "секретар"
+}
+
+
+def build_dependency_graph(triplets: list, roles_in_doc: list = None) -> dict:
     """
-    Формирует структуру узлов и рёбер для Vis.js:
-    - O(n) Hub-топология для субъектов.
-    - Исключение заглушки 'Загальна норма' из связей.
-    - Очистка от incomplete-триплетов.
+    Строит граф узлов и связей, включая сплошные прямые связи с хабами
+    и пунктирные контекстные привязки для 'Загальна норма'.
     """
+    # Блок 2: Инициализация структуры
     nodes = []
     edges = []
-    subject_hubs = set()
+    node_ids = set()
 
+    if not triplets:
+        return {"nodes": [], "edges": []}
+
+    # Блок 3: Перебор триплетов и создание узлов
     for idx, t in enumerate(triplets):
-        # Пропускаем неполные триплеты (без глагола действия)
-        if t.get("incomplete"):
-            continue
+        node_id = f"node_{idx}"
+        subj = t.get("subject") or "Загальна норма"
+        action = t.get("action", "дія")
+        modality = t.get("modality", "NEUT")
+        clause_text = t.get("clause_text", "")
 
-        norm_id = f"norm_{idx+1}"
-        action_label = t.get("action", "дія")
-        mod = t.get("modality", "NORM")
-        
-        # Узел нормы/триплета
         nodes.append({
-            "id": norm_id,
-            "label": f"[{mod}] {action_label}",
-            "group": mod,
-            "shape": "box"
+            "id": node_id,
+            "label": action,
+            "subject": subj,
+            "modality": modality,
+            "cards": t.get("cards", []),
+            "clause": clause_text
         })
+        node_ids.add(node_id)
 
-        # 1. Процедурные связи depends_on (Критический приоритет)
-        for dep in t.get("depends_on", []):
+        # Блок 4: Построение сплошных и пунктирных связей
+        clean_subj = subj.lower().strip()
+
+        # 1. Прямая связь (сплошная линия)
+        if clean_subj in KNOWN_HUBS:
             edges.append({
-                "from": dep,
-                "to": norm_id,
-                "label": "залежить від",
-                "color": {"color": "#ef4444"},
-                "arrows": "to",
-                "type": "depends_on"
+                "source": f"hub_{clean_subj}",
+                "target": node_id,
+                "type": "SUBJECT_HUB",
+                "style": "solid",
+                "label": "суб'єкт"
             })
 
-        # 2. Hub-топология субъектов O(n)
-        subj = t.get("subject")
-        if subj and subj != "Загальна норма":
-            hub_id = f"hub_{subj}"
-            if hub_id not in subject_hubs:
-                subject_hubs.add(hub_id)
-                nodes.append({
-                    "id": hub_id,
-                    "label": f"🏛️ {subj}",
-                    "group": "SUBJECT_HUB",
-                    "shape": "ellipse",
-                    "color": "#818cf8"
-                })
-            
+        # 2. Мягкая контекстная связь (пунктир) для "Загальна норма"
+        elif subj == "Загальна норма" and clause_text:
+            clause_lower = clause_text.lower()
+            for hub in KNOWN_HUBS:
+                if hub in clause_lower:
+                    edges.append({
+                        "source": f"hub_{hub}",
+                        "target": node_id,
+                        "type": "context_subject",
+                        "style": "dashed",
+                        "label": "контекст"
+                    })
+
+        # Блок 5: Межнормовые зависимости
+        for dep_card_id in t.get("depends_on", []):
             edges.append({
-                "from": hub_id,
-                "to": norm_id,
-                "type": "has_norm",
-                "dashes": True,
-                "color": {"color": "#cbd5e1"}
+                "source": node_id,
+                "target": f"card_{dep_card_id}",
+                "type": "depends_on",
+                "style": "dotted",
+                "label": "залежить"
             })
 
     return {"nodes": nodes, "edges": edges}
-
-# Алиас для обратной совместимости
-build_graph_data = build_norm_graph
