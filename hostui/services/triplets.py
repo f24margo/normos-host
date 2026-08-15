@@ -28,11 +28,9 @@ def _analyze_oov_candidate(candidate_word: str, verbs_db: dict) -> dict:
             "candidate": cand
         }
 
-    # Симметричная проверка по Root-policy (>=6 символов) с РЕЕСТРОМ ГЛАГОЛОВ
     cand_prefix = cand[:6] if len(cand) >= 6 else cand
     is_known_root = False
 
-    # Извлекаем все известные леммы из verbs_db (by_verb.json)
     known_lemmas = set()
     if isinstance(verbs_db, dict):
         for k, v in verbs_db.items():
@@ -43,8 +41,6 @@ def _analyze_oov_candidate(candidate_word: str, verbs_db: dict) -> dict:
 
     for lemma in known_lemmas:
         lemma_prefix = lemma[:6] if len(lemma) >= 6 else lemma
-        
-        # Для коротких слов (< 6) — точное совпадение, для длинных — совпадение первых 6 букв
         if len(cand) < 6 or len(lemma) < 6:
             if cand == lemma:
                 is_known_root = True
@@ -79,25 +75,22 @@ def build_clause_triplets(
     modality_source: str,
     applied_marker: str,
     cards_db: dict,
-    verbs_db: dict = None  # Передаём реестр глаголов by_verb.json
+    verbs_db: dict = None
 ) -> list:
     """
     Собирает триплеты ⟨Субъект, Модальность, Действие⟩ для отдельной клаузы.
     """
-    # 1. Извлекаем роли и определяем субъект
     clause_roles = [
-        r for r in all_role_matches 
+        r for r in all_role_matches
         if clause_start <= r["start"] and r["end"] <= clause_end
     ]
     selected_subject = select_clause_subject(clause_roles)
 
-    # 2. Строгая проверка границ (осознанное решение: глагол принадлежит клаузе по своей стартовой позиции)
     clause_verbs = [
-        v for v in matched_verbs_list 
+        v for v in matched_verbs_list
         if clause_start <= v.get("start", -1) < clause_end
     ]
 
-    # 3. Санитизация applied_marker
     if applied_marker in ("registry_default", "", None):
         clean_marker = None
     else:
@@ -118,8 +111,31 @@ def build_clause_triplets(
                 if not verb_default_modality and "default_modality" in card_data:
                     verb_default_modality = card_data["default_modality"]
 
-            # Модальность из закрытого множества {OBL, PERM, PROH} или None
             resolved_modality = final_modality_cat or verb_default_modality or None
+
+            # Развернуть ID → объекты; поддержка source=str и source=dict
+            card_objs = []
+            for cid in v_item.get("card_ids", []):
+                c = (cards_db or {}).get(cid) or {}
+                raw_source = c.get("source")
+                if isinstance(raw_source, dict):
+                    src_label = raw_source.get("act_id") or raw_source.get("source_id") or ""
+                    article = raw_source.get("article") or c.get("article") or ""
+                    paragraph = raw_source.get("paragraph") or ""
+                    if paragraph:
+                        article = f"{article} ч.{paragraph}".strip() if article else f"ч.{paragraph}"
+                else:
+                    src_label = raw_source or ""
+                    article = c.get("article") or ""
+
+                card_objs.append({
+                    "id": cid,
+                    "title": c.get("title") or cid,
+                    "source": src_label,
+                    "article": str(article) if article else "",
+                    "status": c.get("status") or "",
+                    "depends_on": c.get("depends_on") or [],
+                })
 
             clause_triplets.append({
                 "subject": selected_subject,
@@ -128,7 +144,7 @@ def build_clause_triplets(
                 "verb_lemma": v_item.get("verb"),
                 "modality_source": modality_source,
                 "marker": clean_marker,
-                "cards": v_item.get("card_ids", []),
+                "cards": card_objs,
                 "depends_on": sorted(list(set(depends_on_list))),
                 "clause_text": clause,
                 "incomplete": False,
@@ -141,7 +157,6 @@ def build_clause_triplets(
         resolved_modality = final_modality_cat or None
 
         if marker_lower not in PURE_MODALS:
-            # Маркер сам является смысловым действием
             clause_triplets.append({
                 "subject": selected_subject,
                 "modality": resolved_modality,
@@ -156,22 +171,21 @@ def build_clause_triplets(
                 "oov_type": "none"
             })
         else:
-            # Чистая модальность -> ищем инфинитив после маркера (учитывая возможные вводные вставки)
             escaped_marker = re.escape(clean_marker)
-            
-            # 1. Сначала ищем первый инфинитив в клаузе после маркера
-            inf_match = re.search(rf"(?i)\b{escaped_marker}\b[\s\S]*?\b([а-яіїєґa-z\']+(?:ти|тися|тись))\b", clause)
-            
+            inf_match = re.search(
+                rf"(?i)\b{escaped_marker}\b[\s\S]*?\b([а-яіїєґa-z\']+(?:ти|тися|тись))\b",
+                clause
+            )
             if inf_match:
                 raw_candidate = inf_match.group(1)
             else:
-                # 2. Если инфинитив не найден, берем непосредственно следующее слово (для отлова именных конструкций)
-                next_word_match = re.search(rf"(?i)\b{escaped_marker}\s+([а-яіїєґa-z\']+)", clause)
+                next_word_match = re.search(
+                    rf"(?i)\b{escaped_marker}\s+([а-яіїєґa-z\']+)",
+                    clause
+                )
                 raw_candidate = next_word_match.group(1) if next_word_match else None
 
-            # Сверяем кандидата С РЕЕСТРОМ ГЛАГОЛОВ (verbs_db)
             oov_res = _analyze_oov_candidate(raw_candidate, verbs_db or {})
-
             action_text = f"[{clean_marker}] {oov_res['label']}"
 
             clause_triplets.append({
@@ -180,7 +194,7 @@ def build_clause_triplets(
                 "action": action_text,
                 "verb_lemma": None,
                 "oov_candidate": oov_res["candidate"],
-                "oov_type": oov_res["kind"],  # 'oov_form', 'oov_lemma', 'noun_construction', 'none'
+                "oov_type": oov_res["kind"],
                 "modality_source": modality_source,
                 "marker": clean_marker,
                 "cards": [],
@@ -192,5 +206,4 @@ def build_clause_triplets(
     return clause_triplets
 
 
-# Алиас для обратной совместимости
 build_triplets_for_clause = build_clause_triplets

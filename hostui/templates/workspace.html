@@ -1,431 +1,468 @@
 
 <!-- === БЛОК 1: Переключатель пунктирных связей === -->
 <div class="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded border border-gray-200 my-2">
-  <input 
-    type="checkbox" 
-    id="toggleContextSubjects" 
-    checked 
-    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
-  >
-  <label for="toggleContextSubjects" class="text-xs font-medium text-gray-700 cursor-pointer select-none">
-    Контекстні суб'єкти (пунктир)
-  </label>
-</div>
-<!-- === КОНЕЦ БЛОКА 1 === -->
-
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NormOS — Робочий простір</title>
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <style>
-        * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #333; overflow: hidden; }
-        
-        .navbar { display: flex; align-items: center; justify-content: space-between; background: #1f2937; color: #fff; padding: 10px 20px; height: 50px; }
-        .navbar-brand { font-weight: 700; font-size: 16px; color: #38bdf8; text-decoration: none; }
-        .navbar-menu { display: flex; gap: 15px; }
-        .navbar-link { color: #d1d5db; text-decoration: none; font-size: 14px; font-weight: 500; padding: 6px 12px; border-radius: 4px; transition: background 0.2s; }
-        .navbar-link:hover, .navbar-link.active { background: #374151; color: #fff; }
-
-        .container { display: flex; gap: 20px; height: calc(100vh - 70px); max-width: 1600px; margin: 10px auto; padding: 0 15px; }
-        
-        .main-panel { flex: 2; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
-        .side-panel { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
-        
-        .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-        textarea { width: 100%; height: 90px; min-height: 90px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; }
-        
-        button, .btn-label { background: #0066cc; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
-        button:hover, .btn-label:hover { background: #0052a3; }
-        .btn-secondary { background: #2da44e; }
-        .btn-secondary:hover { background: #2c974b; }
-        .btn-sm { padding: 4px 10px; font-size: 12px; background: #6b7280; }
-        .btn-sm:hover { background: #4b5563; }
-        
-        .layers-bar { display: flex; gap: 12px; margin: 8px 0; padding: 8px 12px; background: #f0f4f8; border-radius: 6px; align-items: center; flex-wrap: wrap; }
-        .layer-label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-
-        .editor-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-        .editor-output { flex: 1; overflow-y: auto; border: 1px solid #e1e4e8; padding: 15px; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; font-size: 15px; background: #fafafa; }
-        
-        .highlight-span { cursor: pointer; transition: background-color 0.2s, outline 0.2s; margin: 0 1px; border-radius: 3px; }
-        .highlight-span:hover, .highlight-span.active-highlight { outline: 2px solid #2563eb; background-color: #fef08a !important; }
-
-        .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; }
-        .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; }
-        .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; font-weight: 600; }
-        .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; font-weight: 600; }
-        .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; font-weight: 600; }
-        .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; }
-
-        .inspector-body { flex: 1; overflow-y: auto; padding-right: 5px; }
-        .card-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 12px; margin-top: 10px; }
-        .triplet-box { background: #fff; border-left: 4px solid #4f46e5; border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, border-color 0.2s; cursor: pointer; }
-        .triplet-box:hover { transform: translateX(2px); }
-
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-overlay.active { display: flex; }
-        .modal-container { width: 95vw; height: 92vh; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: #1f2937; color: #fff; }
-        .modal-body { flex: 1; position: relative; background: #f8fafc; overflow: hidden; }
-        #networkContainer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
-    </style>
-</head>
-<body>
-
-<nav class="navbar">
-    <a href="/workspace/" class="navbar-brand">NormOS Lab</a>
-    <div class="navbar-menu">
-        <a href="/workspace/" class="navbar-link active">Робочий простір</a>
-        <a href="/chat/" class="navbar-link">Чат</a>
-        <a href="/documents/" class="navbar-link">Документи</a>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="main-panel">
-        <h2 style="margin: 0 0 8px 0; font-size: 16px;">Нормативний текст</h2>
-        <textarea id="inputText" placeholder="Вставте текст..."></textarea>
-        
-        <div class="toolbar">
-            <button onclick="runAnalysis()">⚡ Проаналізувати</button>
-            <label class="btn-label">
-                📁 Завантажити файл
-                <input type="file" id="fileInput" accept=".txt,.md,.json" style="display: none;" onchange="handleFileUpload(event)">
-            </label>
-            <button class="btn-secondary" onclick="exportAnnotatedDocument()">💾 Експортувати HTML</button>
-        </div>
-
-        <div class="layers-bar">
-            <label class="layer-label"><input type="checkbox" id="layerVerbs" checked onchange="renderHighlights()"> ⚙️ Дії</label>
-            <label class="layer-label"><input type="checkbox" id="layerModality" checked onchange="renderHighlights()"> 🟡 Модальність</label>
-            <label class="layer-label"><input type="checkbox" id="layerRoles" checked onchange="renderHighlights()"> 🏷️ Ролі</label>
-            <label class="layer-label"><input type="checkbox" id="layerMSU" checked onchange="renderHighlights()"> 🔵 Норми МСУ</label>
-        </div>
-
-        <div class="editor-container">
-            <h3 style="margin: 0 0 6px 0; font-size: 13px; color: #555;">Розмічений документ:</h3>
-            <div id="editorOutput" class="editor-output">Натисніть «Проаналізувати»...</div>
-        </div>
-    </div>
-
-    <div class="side-panel">
-        <h2 style="margin: 0 0 10px 0; font-size: 16px;">Інспектор</h2>
-        <div id="graphWidgetCard" class="card-box" style="display: none; margin-bottom: 10px; background: #eef2ff; border: 1px solid #c7d2fe;">
-            <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #3730a3;">🕸️ Граф залежностей норм</h4>
-            <div id="graphSummaryText" style="font-size: 12px; color: #4338ca; margin-bottom: 8px;">Вузлів: 0 | Зв'язків: 0</div>
-            <button class="btn-sm" style="width: 100%; background: #4f46e5; justify-content: center;" onclick="openGraphModal()">🔍 Розгорнути граф</button>
-        </div>
-
-        <div id="inspectorContent" class="inspector-body">Запустіть аналіз...</div>
-    </div>
-</div>
-
-<!-- Модальне вікно графа -->
-<div id="graphModal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <h3 style="margin: 0; font-size: 16px;">🕸️ Інтерактивний граф залежностей</h3>
-                <div style="display: flex; gap: 10px; background: #374151; padding: 4px 10px; border-radius: 6px; font-size: 12px;">
-                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #f3f4f6;">
-                        <input type="checkbox" id="toggleDependsOn" checked onchange="updateGraphFilter()"> ⚡ Процедурні зв'язки (depends_on)
-                    </label>
-                    <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #9ca3af;">
-                        <input type="checkbox" id="toggleSubjectHubs" onchange="updateGraphFilter()"> 🏛️ Кластери суб'єктів
-                    </label>
-                </div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-sm" style="background: #374151;" onclick="fitGraphView()">🎯 Центрувати</button>
-                <button class="btn-sm" style="background: #ef4444;" onclick="closeGraphModal()">✕ Закрити</button>
-            </div>
-        </div>
-        <div class="modal-body">
-            <div id="networkContainer"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-let currentData = { text: "", spans: [], triplets: [], graph: null };
-let network = null;
-let rawNodesDataSet = [];
-let rawEdgesDataSet = [];
-
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById("inputText").value = e.target.result;
-        runAnalysis();
-    };
-    reader.readAsText(file);
-}
-
-function exportAnnotatedDocument() {
-    const outputElement = document.getElementById("editorOutput");
-    if (!outputElement || outputElement.innerText.trim() === "" || outputElement.innerText.includes("Натисніть")) {
-        alert("Немає розміченого тексту для експорту.");
-        return;
-    }
-
-    const htmlContent = `<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>NormOS — Експортований документ</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; line-height: 1.8; color: #333; background: #fff; }
-        .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; border-radius: 3px; }
-        .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; border-radius: 3px; }
-        .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
-        .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
-        .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
-        .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; border-radius: 3px; }
-    </style>
-</head>
-<body>
-    <h2>Розмічений нормативний документ</h2>
-    <hr>
-    <div style="white-space: pre-wrap; margin-top: 20px;">${outputElement.innerHTML}</div>
-</body>
-</html>`;
-
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "normos_annotated_doc.html";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-}
-
-async function runAnalysis() {
-    const text = document.getElementById("inputText").value;
-    if (!text) return;
-
-    const response = await fetch("/api/analyze/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text, layers: ["verbs", "modality", "roles", "msu"] })
-    });
-
-    currentData = await response.json();
-    renderHighlights();
-    renderInspectorData();
-    updateGraphWidget();
-}
-
-function renderHighlights() {
-    if (!currentData.text) return;
-
-    const showVerbs = document.getElementById("layerVerbs").checked;
-    const showModality = document.getElementById("layerModality").checked;
-    const showRoles = document.getElementById("layerRoles").checked;
-    const showMSU = document.getElementById("layerMSU").checked;
-
-    const spans = (currentData.spans || []).filter(s => {
-        if (s.layer === 'verbs' && !showVerbs) return false;
-        if (s.layer === 'modality' && !showModality) return false;
-        if (s.layer === 'roles' && !showRoles) return false;
-        if (s.layer === 'msu' && !showMSU) return false;
-        return true;
-    });
-
-    spans.sort((a, b) => a.start - b.start);
-
-    let html = "";
-    let lastIdx = 0;
-    const text = currentData.text;
-
-    spans.forEach((s, idx) => {
-        if (s.start < lastIdx) return;
-
-        html += escapeHtml(text.substring(lastIdx, s.start));
-
-        let cssClass = "";
-        if (s.layer === "verbs") cssClass = "layer-verb";
-        else if (s.layer === "roles") cssClass = "layer-role";
-        else if (s.layer === "msu") cssClass = "layer-msu";
-        else if (s.layer === "modality") {
-            if (s.cat === "PROH") cssClass = "modality-proh";
-            else if (s.cat === "OBL") cssClass = "modality-obl";
-            else cssClass = "modality-perm";
-        }
-
-        const spanText = escapeHtml(text.substring(s.start, s.end));
-        html += `<span class="highlight-span ${cssClass}" data-start="${s.start}" data-end="${s.end}" onclick="onSpanClick(${s.start}, ${s.end})">${spanText}</span>`;
-        lastIdx = s.end;
-    });
-
-    html += escapeHtml(text.substring(lastIdx));
-    document.getElementById("editorOutput").innerHTML = html;
-}
-
-function renderInspectorData() {
-    const triplets = currentData.triplets || [];
-    let html = `<div class="card-box"><h4 style="margin:0 0 8px 0; font-size:13px; color:#4f46e5;">📐 Нормативні Триплети ⟨S, M, A⟩</h4>`;
-    
-    if (triplets.length === 0) {
-        html += `<div style="font-size:12px; color:#9ca3af;">Триплетів не знайдено</div>`;
-    } else {
-        html += triplets.map((t, index) => {
-            const snippet = t.clause_text ? t.clause_text.substring(0, 60).trim() + "..." : "";
-            const isOOV = t.incomplete || (t.action && t.action.includes("(OOV)"));
-            
-            return `
-            <div class="triplet-box" id="triplet-card-${index}" style="${isOOV ? 'border-left-color: #f59e0b; background: #fffbeb;' : ''}" onclick="highlightClauseByText('${escapeJsString(t.clause_text)}')">
-                <div style="font-size: 13px;">
-                    ${t.subject ? `<b>${escapeHtml(t.subject)}</b>` : `<span style="color:#9ca3af; font-style:italic;">Загальна норма</span>`} 
-                    ➔ <span style="color:#d97706; font-weight:600;">[${t.modality}]</span> 
-                    ➔ <b style="${isOOV ? 'color: #d97706;' : ''}">${escapeHtml(t.action)}</b>
-                </div>
-                ${snippet ? `<div style="font-size: 11px; color: #6b7280; margin-top: 5px; border-top: 1px dashed #e5e7eb; padding-top: 4px; font-style: italic;">«${escapeHtml(snippet)}»</div>` : ''}
-            </div>
-            `;
-        }).join('');
-    }
-    html += `</div>`;
-    document.getElementById("inspectorContent").innerHTML = html;
-}
-
-function highlightClauseByText(clauseText) {
-    if (!clauseText) return;
-    
-    document.querySelectorAll('.highlight-span').forEach(el => el.classList.remove('active-highlight'));
-
-    const editor = document.getElementById("editorOutput");
-    const fullText = currentData.text;
-    const targetIdx = fullText.indexOf(clauseText);
-
-    if (targetIdx !== -1) {
-        const targetEnd = targetIdx + clauseText.length;
-        const matchingSpans = document.querySelectorAll('.highlight-span');
-        let firstMatch = null;
-
-        matchingSpans.forEach(span => {
-            const start = parseInt(span.getAttribute('data-start'));
-            const end = parseInt(span.getAttribute('data-end'));
-            if (start >= targetIdx && end <= targetEnd) {
-                span.classList.add('active-highlight');
-                if (!firstMatch) firstMatch = span;
-            }
-        });
-
-        if (firstMatch) {
-            firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-}
-
-function onSpanClick(start, end) {
-    document.querySelectorAll('.highlight-span').forEach(el => el.classList.remove('active-highlight'));
-    const clickedSpan = document.querySelector(`.highlight-span[data-start="${start}"][data-end="${end}"]`);
-    if (clickedSpan) clickedSpan.classList.add('active-highlight');
-}
-
-function updateGraphWidget() {
-    const card = document.getElementById("graphWidgetCard");
-    const summary = document.getElementById("graphSummaryText");
-    if (currentData.graph && currentData.graph.nodes && currentData.graph.nodes.length > 0) {
-        summary.innerText = `Вузлів: ${currentData.graph.nodes.length} | Зв'язків: ${currentData.graph.edges.length}`;
-        card.style.display = "block";
-    } else {
-        card.style.display = "none";
-    }
-}
-
-function openGraphModal() {
-    document.getElementById("graphModal").classList.add("active");
-    setTimeout(() => { renderGraphNetwork(); }, 150);
-}
-
-function closeGraphModal() {
-    document.getElementById("graphModal").classList.remove("active");
-}
-
-function fitGraphView() {
-    if (network) network.fit();
-}
-
-function renderGraphNetwork() {
-    const container = document.getElementById("networkContainer");
-    if (!currentData.graph || !container) return;
-
-    rawNodesDataSet = currentData.graph.nodes || [];
-    rawEdgesDataSet = currentData.graph.edges || [];
-
-    const options = {
-        nodes: { font: { size: 13, color: '#1f2937' }, borderWidth: 2 },
-        edges: { arrows: { to: { enabled: true, scaleFactor: 0.8 } }, smooth: { type: 'continuous' } },
-        physics: { enabled: true, barnesHut: { gravitationalConstant: -2000, centralGravity: 0.2, springLength: 120 } }
-    };
-
-    if (network) network.destroy();
-    
-    const filteredData = getFilteredGraphData();
-    network = new vis.Network(container, filteredData, options);
-
-    setTimeout(() => { if (network) network.fit(); }, 200);
-}
-
-function getFilteredGraphData() {
-    const showDepends = document.getElementById("toggleDependsOn").checked;
-    const showHubs = document.getElementById("toggleSubjectHubs").checked;
-
-    const activeNodes = rawNodesDataSet.filter(node => {
-        if (node.group === "SUBJECT_HUB" && !showHubs) return false;
-        return true;
-    });
-
-    const activeNodeIds = new Set(activeNodes.map(n => n.id));
-
-    const activeEdges = rawEdgesDataSet.filter(edge => {
-        if (!activeNodeIds.has(edge.from) || !activeNodeIds.has(edge.to)) return false;
-        if (edge.type === "has_norm" && !showHubs) return false;
-        if (edge.type === "depends_on" && !showDepends) return false;
-        return true;
-    });
-
-    return { nodes: new vis.DataSet(activeNodes), edges: new vis.DataSet(activeEdges) };
-}
-
-function updateGraphFilter() {
-    if (!network) return;
-    network.setData(getFilteredGraphData());
-}
-
-function escapeHtml(str) {
-    return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
-}
-
-function escapeJsString(str) {
-    return str ? str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ') : '';
-}
-</script>
-
-</body>
-</html>
-
-<script>
-// === БЛОК 2: Обработчик скрытия/показа пунктирных связей ===
-document.getElementById("toggleContextSubjects")?.addEventListener("change", function(e) {
-  const isChecked = e.target.checked;
-  if (window.edgesDataSet) {
-    const contextEdges = window.edgesDataSet.get({
-      filter: item => item.type === "context_subject"
-    });
-    contextEdges.forEach(edge => {
-      window.edgesDataSet.update({ id: edge.id, hidden: !isChecked });
-    });
+    <input 
+      type="checkbox" 
+      id="toggleContextSubjects" 
+      checked 
+      class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+    >
+    <label for="toggleContextSubjects" class="text-xs font-medium text-gray-700 cursor-pointer select-none">
+      Контекстні суб'єкти (пунктир)
+    </label>
+  </div>
+  <!-- === КОНЕЦ БЛОКА 1 === -->
+  
+  <!DOCTYPE html>
+  <html lang="uk">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>NormOS — Робочий простір</title>
+      <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+      <style>
+          * { box-sizing: border-box; }
+          html, body { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #333; overflow: hidden; }
+          
+          .navbar { display: flex; align-items: center; justify-content: space-between; background: #1f2937; color: #fff; padding: 10px 20px; height: 50px; }
+          .navbar-brand { font-weight: 700; font-size: 16px; color: #38bdf8; text-decoration: none; }
+          .navbar-menu { display: flex; gap: 15px; }
+          .navbar-link { color: #d1d5db; text-decoration: none; font-size: 14px; font-weight: 500; padding: 6px 12px; border-radius: 4px; transition: background 0.2s; }
+          .navbar-link:hover, .navbar-link.active { background: #374151; color: #fff; }
+  
+          .container { display: flex; gap: 20px; height: calc(100vh - 70px); max-width: 1600px; margin: 10px auto; padding: 0 15px; }
+          
+          .main-panel { flex: 2; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
+          .side-panel { flex: 1; display: flex; flex-direction: column; background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 100%; overflow: hidden; }
+          
+          .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+          textarea { width: 100%; height: 90px; min-height: 90px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; }
+          
+          button, .btn-label { background: #0066cc; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+          button:hover, .btn-label:hover { background: #0052a3; }
+          .btn-secondary { background: #2da44e; }
+          .btn-secondary:hover { background: #2c974b; }
+          .btn-sm { padding: 4px 10px; font-size: 12px; background: #6b7280; }
+          .btn-sm:hover { background: #4b5563; }
+          
+          .layers-bar { display: flex; gap: 12px; margin: 8px 0; padding: 8px 12px; background: #f0f4f8; border-radius: 6px; align-items: center; flex-wrap: wrap; }
+          .layer-label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  
+          .editor-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+          .editor-output { flex: 1; overflow-y: auto; border: 1px solid #e1e4e8; padding: 15px; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; font-size: 15px; background: #fafafa; }
+          
+          .highlight-span { cursor: pointer; transition: background-color 0.2s, outline 0.2s; margin: 0 1px; border-radius: 3px; }
+          .highlight-span:hover, .highlight-span.active-highlight { outline: 2px solid #2563eb; background-color: #fef08a !important; }
+  
+          .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; }
+          .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; }
+          .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; font-weight: 600; }
+          .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; font-weight: 600; }
+          .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; font-weight: 600; }
+          .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; }
+  
+          .inspector-body { flex: 1; overflow-y: auto; padding-right: 5px; }
+          .card-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 12px; margin-top: 10px; }
+          .triplet-box { background: #fff; border-left: 4px solid #4f46e5; border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: transform 0.1s, border-color 0.2s; cursor: pointer; }
+          .triplet-box:hover { transform: translateX(2px); }
+  
+          .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+          .modal-overlay.active { display: flex; }
+          .modal-container { width: 95vw; height: 92vh; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+          .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: #1f2937; color: #fff; }
+          .modal-body { flex: 1; position: relative; background: #f8fafc; overflow: hidden; }
+          #networkContainer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
+      </style>
+  </head>
+  <body>
+  
+  <nav class="navbar">
+      <a href="/workspace/" class="navbar-brand">NormOS Lab</a>
+      <div class="navbar-menu">
+          <a href="/workspace/" class="navbar-link active">Робочий простір</a>
+          <a href="/chat/" class="navbar-link">Чат</a>
+          <a href="/documents/" class="navbar-link">Документи</a>
+      </div>
+  </nav>
+  
+  <div class="container">
+      <div class="main-panel">
+          <h2 style="margin: 0 0 8px 0; font-size: 16px;">Нормативний текст</h2>
+          <textarea id="inputText" placeholder="Вставте текст..."></textarea>
+          
+          <div class="toolbar">
+              <button onclick="runAnalysis()">⚡ Проаналізувати</button>
+              <label class="btn-label">
+                  📁 Завантажити файл
+                  <input type="file" id="fileInput" accept=".txt,.md,.json" style="display: none;" onchange="handleFileUpload(event)">
+              </label>
+              <button class="btn-secondary" onclick="exportAnnotatedDocument()">💾 Експортувати HTML</button>
+          </div>
+  
+          <div class="layers-bar">
+              <label class="layer-label"><input type="checkbox" id="layerVerbs" checked onchange="renderHighlights()"> ⚙️ Дії</label>
+              <label class="layer-label"><input type="checkbox" id="layerModality" checked onchange="renderHighlights()"> 🟡 Модальність</label>
+              <label class="layer-label"><input type="checkbox" id="layerRoles" checked onchange="renderHighlights()"> 🏷️ Ролі</label>
+              <label class="layer-label"><input type="checkbox" id="layerMSU" checked onchange="renderHighlights()"> 🔵 Норми МСУ</label>
+          </div>
+  
+          <div class="editor-container">
+              <h3 style="margin: 0 0 6px 0; font-size: 13px; color: #555;">Розмічений документ:</h3>
+              <div id="editorOutput" class="editor-output">Натисніть «Проаналізувати»...</div>
+          </div>
+      </div>
+  
+      <div class="side-panel">
+          <h2 style="margin: 0 0 10px 0; font-size: 16px;">Інспектор</h2>
+          <div id="graphWidgetCard" class="card-box" style="display: none; margin-bottom: 10px; background: #eef2ff; border: 1px solid #c7d2fe;">
+              <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #3730a3;">🕸️ Граф залежностей норм</h4>
+              <div id="graphSummaryText" style="font-size: 12px; color: #4338ca; margin-bottom: 8px;">Вузлів: 0 | Зв'язків: 0</div>
+              <button class="btn-sm" style="width: 100%; background: #4f46e5; justify-content: center;" onclick="openGraphModal()">🔍 Розгорнути граф</button>
+          </div>
+  
+          <div id="inspectorContent" class="inspector-body">Запустіть аналіз...</div>
+      </div>
+  </div>
+  
+  <!-- Модальне вікно графа -->
+  <div id="graphModal" class="modal-overlay">
+      <div class="modal-container">
+          <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 15px;">
+                  <h3 style="margin: 0; font-size: 16px;">🕸️ Інтерактивний граф залежностей</h3>
+                  <div style="display: flex; gap: 10px; background: #374151; padding: 4px 10px; border-radius: 6px; font-size: 12px;">
+                      <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #f3f4f6;">
+                          <input type="checkbox" id="toggleDependsOn" checked onchange="updateGraphFilter()"> ⚡ Процедурні зв'язки (depends_on)
+                      </label>
+                      <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; color: #9ca3af;">
+                          <input type="checkbox" id="toggleSubjectHubs" onchange="updateGraphFilter()"> 🏛️ Кластери суб'єктів
+                      </label>
+                  </div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                  <button class="btn-sm" style="background: #374151;" onclick="fitGraphView()">🎯 Центрувати</button>
+                  <button class="btn-sm" style="background: #ef4444;" onclick="closeGraphModal()">✕ Закрити</button>
+              </div>
+          </div>
+          <div class="modal-body">
+              <div id="networkContainer"></div>
+          </div>
+      </div>
+  </div>
+  
+  <script>
+  let currentData = { text: "", spans: [], triplets: [], graph: null };
+  let network = null;
+  let rawNodesDataSet = [];
+  let rawEdgesDataSet = [];
+  
+  function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+  
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          document.getElementById("inputText").value = e.target.result;
+          runAnalysis();
+      };
+      reader.readAsText(file);
   }
-});
-// === КОНЕЦ БЛОКА 2 ===
-</script>
+  
+  function exportAnnotatedDocument() {
+      const outputElement = document.getElementById("editorOutput");
+      if (!outputElement || outputElement.innerText.trim() === "" || outputElement.innerText.includes("Натисніть")) {
+          alert("Немає розміченого тексту для експорту.");
+          return;
+      }
+  
+      const htmlContent = `<!DOCTYPE html>
+  <html lang="uk">
+  <head>
+      <meta charset="UTF-8">
+      <title>NormOS — Експортований документ</title>
+      <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px; line-height: 1.8; color: #333; background: #fff; }
+          .layer-verb { background-color: #e0e7ff; color: #3730a3; border-bottom: 2px solid #818cf8; padding: 1px 3px; border-radius: 3px; }
+          .layer-msu { background-color: #ddf4ff; color: #0969da; border-bottom: 2px solid #54aef0; padding: 1px 3px; border-radius: 3px; }
+          .modality-proh { border: 2px solid #ef4444; background-color: #fef2f2; color: #991b1b; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+          .modality-obl { border: 2px double #f59e0b; background-color: #fffbeb; color: #92400e; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+          .modality-perm { border: 2px dashed #10b981; background-color: #ecfdf5; color: #065f46; padding: 1px 4px; border-radius: 4px; font-weight: 600; }
+          .layer-role { background-color: #f1f5f9; color: #3730a3; border-bottom: 2px dotted #4f46e5; font-weight: 600; padding: 1px 4px; border-radius: 3px; }
+      </style>
+  </head>
+  <body>
+      <h2>Розмічений нормативний документ</h2>
+      <hr>
+      <div style="white-space: pre-wrap; margin-top: 20px;">${outputElement.innerHTML}</div>
+  </body>
+  </html>`;
+  
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "normos_annotated_doc.html";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+  }
+  
+  async function runAnalysis() {
+      const text = document.getElementById("inputText").value;
+      if (!text) return;
+  
+      const response = await fetch("/api/analyze/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text, layers: ["verbs", "modality", "roles", "msu"] })
+      });
+  
+      currentData = await response.json();
+      renderHighlights();
+      renderInspectorData();
+      updateGraphWidget();
+  }
+  
+  function renderHighlights() {
+      if (!currentData.text) return;
+  
+      const showVerbs = document.getElementById("layerVerbs").checked;
+      const showModality = document.getElementById("layerModality").checked;
+      const showRoles = document.getElementById("layerRoles").checked;
+      const showMSU = document.getElementById("layerMSU").checked;
+  
+      const spans = (currentData.spans || []).filter(s => {
+          if (s.layer === 'verbs' && !showVerbs) return false;
+          if (s.layer === 'modality' && !showModality) return false;
+          if (s.layer === 'roles' && !showRoles) return false;
+          if (s.layer === 'msu' && !showMSU) return false;
+          return true;
+      });
+  
+      spans.sort((a, b) => a.start - b.start);
+  
+      let html = "";
+      let lastIdx = 0;
+      const text = currentData.text;
+  
+      spans.forEach((s, idx) => {
+          if (s.start < lastIdx) return;
+  
+          html += escapeHtml(text.substring(lastIdx, s.start));
+  
+          let cssClass = "";
+          if (s.layer === "verbs") cssClass = "layer-verb";
+          else if (s.layer === "roles") cssClass = "layer-role";
+          else if (s.layer === "msu") cssClass = "layer-msu";
+          else if (s.layer === "modality") {
+              if (s.cat === "PROH") cssClass = "modality-proh";
+              else if (s.cat === "OBL") cssClass = "modality-obl";
+              else cssClass = "modality-perm";
+          }
+  
+          const spanText = escapeHtml(text.substring(s.start, s.end));
+          html += `<span class="highlight-span ${cssClass}" data-start="${s.start}" data-end="${s.end}" onclick="onSpanClick(${s.start}, ${s.end})">${spanText}</span>`;
+          lastIdx = s.end;
+      });
+  
+      html += escapeHtml(text.substring(lastIdx));
+      document.getElementById("editorOutput").innerHTML = html;
+  }
+  
+  function renderInspectorData() {
+      const triplets = currentData.triplets || [];
+      let html = `<div class="card-box"><h4 style="margin:0 0 8px 0; font-size:13px; color:#4f46e5;">📐 Нормативні Триплети ⟨S, M, A⟩</h4>`;
+
+      if (triplets.length === 0) {
+          html += `<div style="font-size:12px; color:#9ca3af;">Триплетів не знайдено</div>`;
+      } else {
+          html += triplets.map((t, index) => {
+              const snippet = t.clause_text ? t.clause_text.substring(0, 60).trim() + "..." : "";
+              const isOOV = t.incomplete || (t.action && t.action.includes("(OOV)"));
+
+              let cardsHtml = "";
+              const cards = Array.isArray(t.cards) ? t.cards : [];
+              if (cards.length > 0) {
+                  cardsHtml = cards.map(c => {
+                      if (typeof c === "string") {
+                          return `<div style="margin-top:6px; padding:6px 8px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:11px;">
+                              📋 <b>${escapeHtml(c)}</b>
+                          </div>`;
+                      }
+                      const srcStr = (typeof c.source === "object" && c.source !== null)
+                          ? (c.source.act_id || c.source.source_id || c.source.text || "")
+                          : (c.source || "");
+                      const articleStr = c.article
+                          || (typeof c.source === "object" && c.source ? c.source.article : "")
+                          || "";
+                      const srcLine = [srcStr, articleStr ? ("ст. " + articleStr) : ""].filter(Boolean).join(" · ");
+                      const isDraft = (c.status || "").toLowerCase() === "draft";
+                      const statusLine = c.status
+                          ? (isDraft
+                              ? `<span style="color:#b45309;">Статус: чернетка (draft)</span>`
+                              : `<span style="color:#64748b;">Статус: ${escapeHtml(c.status)}</span>`)
+                          : "";
+                      const deps = Array.isArray(c.depends_on) ? c.depends_on : (t.depends_on || []);
+                      const depsLine = deps.length
+                          ? `<div style="color:#6b7280; margin-top:2px;">🔗 залежить від: ${escapeHtml(deps.join(", "))}</div>`
+                          : "";
+
+                      return `<div style="margin-top:6px; padding:6px 8px; background:${isDraft ? '#fffbeb' : '#eff6ff'}; border:1px solid ${isDraft ? '#fcd34d' : '#bfdbfe'}; border-radius:4px; font-size:11px; line-height:1.4;">
+                          📋 <b>${escapeHtml(c.id || "")}</b> — ${escapeHtml(c.title || "")}
+                          ${srcLine ? `<div style="color:#1e40af; margin-top:2px;">📜 Джерело: ${escapeHtml(srcLine)}</div>` : ""}
+                          ${statusLine ? `<div style="margin-top:2px;">${statusLine}</div>` : ""}
+                          ${depsLine}
+                      </div>`;
+                  }).join("");
+              }
+
+              return `
+              <div class="triplet-box" id="triplet-card-${index}" style="${isOOV ? 'border-left-color: #f59e0b; background: #fffbeb;' : ''}" onclick="highlightClauseByText('${escapeJsString(t.clause_text)}')">
+                  <div style="font-size: 13px;">
+                      ${t.subject ? `<b>${escapeHtml(t.subject)}</b>` : `<span style="color:#9ca3af; font-style:italic;">Загальна норма</span>`}
+                      ➔ <span style="color:#d97706; font-weight:600;">[${t.modality}]</span>
+                      ➔ <b style="${isOOV ? 'color: #d97706;' : ''}">${escapeHtml(t.action)}</b>
+                  </div>
+                  ${snippet ? `<div style="font-size: 11px; color: #6b7280; margin-top: 5px; border-top: 1px dashed #e5e7eb; padding-top: 4px; font-style: italic;">«${escapeHtml(snippet)}»</div>` : ''}
+                  ${cardsHtml}
+              </div>
+              `;
+          }).join('');
+      }
+      html += `</div>`;
+      document.getElementById("inspectorContent").innerHTML = html;
+  }
+  function highlightClauseByText(clauseText) {
+      if (!clauseText) return;
+      
+      document.querySelectorAll('.highlight-span').forEach(el => el.classList.remove('active-highlight'));
+  
+      const editor = document.getElementById("editorOutput");
+      const fullText = currentData.text;
+      const targetIdx = fullText.indexOf(clauseText);
+  
+      if (targetIdx !== -1) {
+          const targetEnd = targetIdx + clauseText.length;
+          const matchingSpans = document.querySelectorAll('.highlight-span');
+          let firstMatch = null;
+  
+          matchingSpans.forEach(span => {
+              const start = parseInt(span.getAttribute('data-start'));
+              const end = parseInt(span.getAttribute('data-end'));
+              if (start >= targetIdx && end <= targetEnd) {
+                  span.classList.add('active-highlight');
+                  if (!firstMatch) firstMatch = span;
+              }
+          });
+  
+          if (firstMatch) {
+              firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+      }
+  }
+  
+  function onSpanClick(start, end) {
+      document.querySelectorAll('.highlight-span').forEach(el => el.classList.remove('active-highlight'));
+      const clickedSpan = document.querySelector(`.highlight-span[data-start="${start}"][data-end="${end}"]`);
+      if (clickedSpan) clickedSpan.classList.add('active-highlight');
+  }
+  
+  function updateGraphWidget() {
+      const card = document.getElementById("graphWidgetCard");
+      const summary = document.getElementById("graphSummaryText");
+      if (currentData.graph && currentData.graph.nodes && currentData.graph.nodes.length > 0) {
+          summary.innerText = `Вузлів: ${currentData.graph.nodes.length} | Зв'язків: ${currentData.graph.edges.length}`;
+          card.style.display = "block";
+      } else {
+          card.style.display = "none";
+      }
+  }
+  
+  function openGraphModal() {
+      document.getElementById("graphModal").classList.add("active");
+      setTimeout(() => { renderGraphNetwork(); }, 150);
+  }
+  
+  function closeGraphModal() {
+      document.getElementById("graphModal").classList.remove("active");
+  }
+  
+  function fitGraphView() {
+      if (network) network.fit();
+  }
+  
+  function renderGraphNetwork() {
+      const container = document.getElementById("networkContainer");
+      if (!currentData.graph || !container) return;
+  
+      rawNodesDataSet = currentData.graph.nodes || [];
+      rawEdgesDataSet = currentData.graph.edges || [];
+  
+      const options = {
+          nodes: { font: { size: 13, color: '#1f2937' }, borderWidth: 2 },
+          edges: { arrows: { to: { enabled: true, scaleFactor: 0.8 } }, smooth: { type: 'continuous' } },
+          physics: { enabled: true, barnesHut: { gravitationalConstant: -2000, centralGravity: 0.2, springLength: 120 } }
+      };
+  
+      if (network) network.destroy();
+      
+      const filteredData = getFilteredGraphData();
+      network = new vis.Network(container, filteredData, options);
+  
+      setTimeout(() => { if (network) network.fit(); }, 200);
+  }
+  
+  function getFilteredGraphData() {
+      const showDepends = document.getElementById("toggleDependsOn").checked;
+      const showHubs = document.getElementById("toggleSubjectHubs").checked;
+  
+      const activeNodes = rawNodesDataSet.filter(node => {
+          if (node.group === "SUBJECT_HUB" && !showHubs) return false;
+          return true;
+      });
+  
+      const activeNodeIds = new Set(activeNodes.map(n => n.id));
+  
+      const activeEdges = rawEdgesDataSet.filter(edge => {
+          if (!activeNodeIds.has(edge.from) || !activeNodeIds.has(edge.to)) return false;
+          if (edge.type === "has_norm" && !showHubs) return false;
+          if (edge.type === "depends_on" && !showDepends) return false;
+          return true;
+      });
+  
+      return { nodes: new vis.DataSet(activeNodes), edges: new vis.DataSet(activeEdges) };
+  }
+  
+  function updateGraphFilter() {
+      if (!network) return;
+      network.setData(getFilteredGraphData());
+  }
+  
+  function escapeHtml(str) {
+      return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+  }
+  
+  function escapeJsString(str) {
+      return str ? str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ') : '';
+  }
+  </script>
+  
+  </body>
+  </html>
+  
+  <script>
+  // === БЛОК 2: Обработчик скрытия/показа пунктирных связей ===
+  document.getElementById("toggleContextSubjects")?.addEventListener("change", function(e) {
+    const isChecked = e.target.checked;
+    if (window.edgesDataSet) {
+      const contextEdges = window.edgesDataSet.get({
+        filter: item => item.type === "context_subject"
+      });
+      contextEdges.forEach(edge => {
+        window.edgesDataSet.update({ id: edge.id, hidden: !isChecked });
+      });
+    }
+  });
+  // === КОНЕЦ БЛОКА 2 ===
+  </script>
+  
