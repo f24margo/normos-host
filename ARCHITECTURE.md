@@ -1,231 +1,460 @@
-# NormOS Host Architecture
 
-**Document ID:** HM-001  
-**Status:** Draft  
-**Version:** 0.1  
+
+### `ARCHITECTURE.md`
+
+```markdown
+# NormOS Host — Architecture
+
+**Document ID:** HM-ARCH-001  
+**Status:** Working (post demo-inspector)  
 **Repo:** normos-host  
-**Related:** normos-lab (analysis core), NKS series (methodology)
+**Related:** packages/msu_ua, NKS-000…NKS-013 (lab), HOST.md
 
 ---
 
-## 1. Mission
+## 1. Purpose
 
-NormOS Host — платформа **исполнения** NormOS для реальных пользователей.
+NormOS Host — **execution layer** for normative analysis of local self-government (MSU) texts.
 
-На этапе пилота Host предоставляет **защищённое рабочее место в браузере** для 2–3 территориальных громад:
+It does **not** invent legal conclusions. It:
 
-- вход по логину;
-- разбор текстов актов МСУ (регламент, решение, проект к сессии и т.п.);
-- изоляция данных между громадами;
-- сопровождение инфраструктуры — на стороне команды Host, не громады.
+1. finds normative actions (verbs) and modality markers in text;
+2. links hits to **norm cards** from package `msu_ua`;
+3. builds clause-level triplets ⟨Subject, Modality, Action⟩;
+4. exposes an explainable UI (layers, inspector, dependency graph).
 
-Host **не** является органом власти, реестром актов или юридической консультацией.
-
----
-
-## 2. Design Principles
-
-1. **Hosted-only для пилота** — громада ничего не разворачивает; только браузер и учётная запись.
-2. **Human-in-the-loop** — система подсказывает; решение и ответственность за человеком.
-3. **Tenant isolation** — данные громады A недоступны громаде B на уровне запросов и хранения.
-4. **Тонкий Host, умное ядро** — лингвистический/нормативный разбор живёт в core (lab); Host даёт доступ, роли, UI, журнал.
-5. **Честные границы** — не обещать «документ законен / незаконен».
-6. **Простота v0.1** — без ИИ-агента, без отдельного «сайта офиса» как части Host, без self-service регистрации.
-7. **Масштабирование без смены модели** — 2–3 громады → ~10 на том же архитектурном контракте (больше tenant’ов, тот же способ поставки).
+Legal responsibility stays with the human operator.
 
 ---
 
-## 3. Host Responsibilities
+## 2. System split: Host vs Package vs Lab
 
-| Host делает | Host не делает |
-|-------------|----------------|
-| Аутентификация и сессии | Разработку теории нормативно-формализованной лингвистики |
-| Модель громад (tenant) и ролей | Хранение полной базы законодательства Украины |
-| UI: ввод текста / файла → результат | Автоматический юридический вердикт |
-| Вызов analysis core | Деплой ПО в советах громад |
-| Журнал разборов (в пределах tenant) | Публичный маркетинг-сайт (опционально отдельно) |
-| Эксплуатация сервера, бэкапы | |
+| Layer | Location | Role |
+|-------|----------|------|
+| **Host** | this repo (`hostui/`, Django) | Auth surface, HTTP API, UI, orchestration |
+| **Package `msu_ua`** | `packages/msu_ua/` | Norm cards, sources, lookup indices |
+| **Lab / theory** | normos-lab-demo (separate) | NKS specs, verb alphabet research, alignment metrics |
 
----
-
-## 4. Relationship to other repos
-
-| Репозиторий | Роль |
-|-------------|------|
-| **normos-lab** (и draft) | Ядро анализа: registry, inference, modality, эксперименты |
-| **normos-host** | Исполнение: login, tenant, UI, API, деплой |
-| Публичный lab с DOI | Стабильный исследовательский артефакт — не смешивать с пилотным Host |
-
-Host **импортирует или вызывает** analysis core; не дублирует реестр глаголов внутри себя как второй источник истины.
+Host **consumes** the package through `RegistryService`.  
+Package content can evolve (new cards, index rebuild) without rewriting Host pipeline, as long as schemas stay compatible.
 
 ---
 
-## 5. Core Components (v0.1)
+## 3. Runtime data flow
 
-Компонент                Назначение
-Frontend               Логин, форма текста, результат простым языком
-API / app layer        Сессия, проверка tenant/role, вызов analyze
-core                   Ядро анализа (подключается из lab, не копируется как второй реестр)БД                     tenants, users, roles; на старте SQLite, для пилота 2–3 громад — Postgres
-
-Браузер (секретар / юрист / …)
-        │ HTTPS
-        ▼
-┌──────────────────────────────────┐
-│  Сервер Host (ПК або VPS)        │
-│                                  │
-│  Frontend  (UI додатку)          │
-│       │                          │
-│       ▼                          │
-│  API / application layer         │
-│  (сесія, права, analyze)         │
-│       │                          │
-│       ├── core (Inference,       │
-│       │         registry, …)     │
-│       │     з normos-lab         │
-│       └── БД (SQLite → Postgres) │
-│            tenants               │
-│            users + roles         │
-│            sessions / history    │
-└──────────────────────────────────┘
-
-[Browser]
-→ HTTPS
-→ Web UI (pages/forms)
-→ Application layer (Django или эквивалент)
-→ Auth + Tenant context
-→ Analysis service adapter → core.InferenceEngine
-→ PostgreSQL
-
-
-| Компонент | Назначение |
-|-----------|------------|
-| **Web UI** | Логин, форма разбора, отображение результата простым языком |
-| **Auth** | Пользователи, пароли, сессии |
-| **Tenant layer** | Привязка пользователя к громаде; фильтр всех данных |
-| **Analysis adapter** | Вызов существующего engine; маппинг ответа в UI |
-| **PostgreSQL** | tenants, users, (опционально) history |
-| **Admin** | Ручное создание громад и пользователей командой Host |
-
-**Вне v0.1:** ИИ-агент/чат, LLM-коннектор, пакет норм `msu_ua`, слой формулировок (TRIZ), Event Bus как обязательный runtime, Package Manager.
+```
+Browser (workspace)
+    │  POST /api/analyze/  { text, layers[] }
+    ▼
+views.analyze_api
+    ▼
+services.normos.analyze_document
+    ▼
+services.markup.analyze_document_pipeline
+    │
+    ├─ RegistryService  ← packages/msu_ua/index/* + cards/*
+    ├─ roles.find_agent_forms_in_text
+    ├─ verb scan via by_verb index → matched_verbs_list (+ card_ids)
+    ├─ modality markers (clause-local)
+    ├─ triplets.build_clause_triplets  → ⟨S, M, A⟩ + cards[] + depends_on
+    ├─ graph.build_norm_graph
+    └─ recommender.generate_recommendations
+    ▼
+JSON: { text, spans, triplets, graph, metrics, oov, matched_cards_count }
+    ▼
+workspace.html
+    ├─ renderHighlights (layers: verbs | modality | roles | msu)
+    ├─ renderInspectorData (triplets + expanded norm cards)
+    └─ vis-network graph modal
+```
 
 ---
 
-## 6. Multi-tenant model
+## 4. Package `msu_ua` contract
 
-- **Tenant** = одна територіальна громада (или один пилотный кабинет).
-- **User** принадлежит ровно одному tenant (в v0.1).
-- **Role** (пример): `secretar`, `lawyer`, `viewer`, `admin_gromada`.
-- В v0.1 права на «запуск разбора» могут быть одинаковыми у ролей; роль фиксируется для журнала и будущего UI.
-- Любая выборка сущностей с данными громады: **обязательный** `tenant_id` (или эквивалент).
+### 4.1 Layout
 
-Пилот: **2–3 tenant**, по **3–4 пользователя** на tenant.
+```
+packages/msu_ua/
+  package.json          # sources list, cards_count
+  cards/N01.json … N51.json
+  sources/              # act-level reference JSON
+  index/
+    by_verb.json        # verb_lemma_or_phrase → [card_id, …]
+    by_agent.json       # agent phrase → [card_id, …]
+    by_source.json      # source_id → [card_id, …]
+```
 
----
+Indices are **generated** by:
 
-## 7. Internal API (логический контракт v0.1)
+```bash
+python manage.py build_msu_index
+```
 
-Не обязательно отдельный публичный REST для клиентов; достаточно server-rendered UI. Логические операции:
+Host never hardcodes the verb→card map in Python.
 
-| Операция | Описание |
-|----------|----------|
-| `login` | Сессия пользователя |
-| `analyze(text \| file)` | Разбор в контексте текущего tenant/user |
-| `list_my_analyses` | (опционально) история текущего пользователя/tenant |
-| Admin: `create_tenant`, `create_user` | Только команда Host |
+### 4.2 Norm card (two on-disk shapes)
 
-Ответ `analyze` включает минимум: краткий итог, найденные действия/режимы, признак «не распознано», служебный disclaimer.
+**NKS-013 object source (preferred):**
 
----
+```json
+{
+  "id": "N01",
+  "title": "…",
+  "source": {
+    "act_id": "EUR_CHARTER_LGS_1985",
+    "article": "3",
+    "paragraph": "1",
+    "text_quote": "…"
+  },
+  "source_confidence": "verified | approximate",
+  "verbs": ["…"],
+  "agents": ["…"],
+  "depends_on": ["N01"],
+  "status": "draft | active",
+  "default_modality": "OBL"
+}
+```
 
-## 8. Runtime
+**Legacy flat source (still present, e.g. N06/N07):**
 
-- Один сервер (рабочая машина или VPS) на пилот.
-- Один процесс приложения (+ PostgreSQL).
-- Несколько одновременных пользователей (единицы) — обычные параллельные HTTP-запросы; изоляция через session + tenant_id.
-- Analysis выполняется в запросе (синхронно) на v0.1; фоновые очереди — при появлении тяжёлых задач.
+```json
+{
+  "id": "N06",
+  "title": "…",
+  "source": "CONSTITUTION_MSU",
+  "article": "140, 143",
+  "verbs": ["…"],
+  "depends_on": ["N01"],
+  "status": "active"
+}
+```
 
----
+### 4.3 Pipeline normalization
 
-## 9. Dashboard (UI v0.1)
+In `triplets.build_clause_triplets`, card IDs are expanded to **API-stable objects**:
 
-1. Страница входа.  
-2. Рабочий экран: текст или файл → «Просмотреть документ».  
-3. Результат простым языком + disclaimer.  
-4. (Желательно) список последних разборов.  
-5. Django Admin (или аналог) — только для команды Host.
+```json
+{
+  "id": "N06",
+  "title": "…",
+  "source": "CONSTITUTION_MSU",
+  "article": "140, 143",
+  "status": "active",
+  "depends_on": ["N01"]
+}
+```
 
-Язык UI — без внутренних терминов ядра (registry, modality, NKS).
-
----
-
-## 10. Event Bus
-
-**Статус:** не обязателен для v0.1 Host.
-
-События анализа могут логироваться как записи БД (`Analysis` created). Полноценная шина событий NormOS (NKS-001) — развитие при сближении Host с полным kernel runtime.
-
----
-
-## 11. Package Manager
-
-**Статус:** зарезервировано.
-
-В будущем Host может подключать пакеты правил (например `msu_ua`) per tenant. В v0.1 пакет норм не требуется: работает только analysis core (язык текста).
-
----
-
-## 12. Security
-
-- Пароли только в виде хеша.
-- Сессии по HTTPS в эксплуатации.
-- Строгое разделение tenant в запросах.
-- Загрузки файлов: ограничение размера/типа; срок хранения (TTL) — политика пилота.
-- Ключи и секреты — в окружении сервера, не в git.
-- Документы громад не используются для обучения внешних моделей без отдельного согласия.
-
----
-
-## 13. Deployment
-
-| Среда | Назначение |
-|-------|------------|
-| Local / lab | Разработка Host + подключение core |
-| Pilot server | 2–3 громады, доступы выдаёт команда |
-| Later | Тот же контракт, больше tenant; при необходимости перенос на VPS/облако |
-
-Громада **не** получает инструкций по Docker/Postgres. Поставка: URL + логин + краткая памятка.
+Object-shaped `source` is flattened to `act_id` + article/paragraph string so the UI never receives `[object Object]`.
 
 ---
 
-## 14. Roadmap (Host)
+## 5. Host modules (`hostui/services/`)
 
-| Этап | Содержание |
-|------|------------|
-| **v0.1** | Auth, tenant, UI analyze, 2–3 громады |
-| **v0.2** | История разборов, укрепление admin, стабильный деплой |
-| **v0.3** | До ~10 громад на той же модели |
-| **Later** | Пакет норм (opt-in), ролевые экраны, опционально помощник-диалог |
+| Module | Responsibility |
+|--------|----------------|
+| `registry.py` | Load `by_verb` / `by_agent` / `cards_db` into memory |
+| `parser.py` | Normalize text, split clauses |
+| `roles.py` | Agent form detection, nominative subject selection |
+| `markup.py` | Main pipeline: spans, modality, OOV metrics, orchestration |
+| `triplets.py` | Clause triplets; card expansion; OOV action labeling |
+| `graph.py` | Nodes/edges for inspector graph (`depends_on`, subject hubs, soft edges) |
+| `recommender.py` | Lightweight post-hints for UI |
+| `exporter.py` | Annotated export helpers |
+| `normos.py` | Thin façade: `analyze_document` → pipeline |
+| `gemini.py` | Optional AI chat (separate from rule pipeline) |
 
-Параллельно: освоение стека (например Django) на практике; документация в этом репо обновляется по мере решений, не опережая пилот без нужды.
-
----
-
-## 15. Non-goals (v0.1)
-
-- ИИ-агент как основной UX  
-- Сайт «проектного офиса» внутри Host  
-- Self-service регистрация громад  
-- Юридически значимый вывод о соответствии закону  
-- Отдельный MCP/сервер на каждую громаду  
+**Invariant:** matching rules live in data (package + markers), not scattered in views.
 
 ---
 
-## 16. References
+## 6. Analysis products
 
-- NormOS lab / core (inference, verb registry, context modality)  
-- NKS-000 Constitution (принципы честности и приоритета спецификаций)  
-- Pilot policy: hosted workplace, team operates infrastructure  
+### 6.1 Spans (document layers)
+
+| layer | Meaning |
+|-------|---------|
+| `roles` | Subject / role forms |
+| `verbs` | Matched actions from index |
+| `modality` | OBL / PERM / PROH markers |
+| `msu` | Card-linked spans (`card_id`) |
+
+### 6.2 Triplets
+
+```text
+⟨ subject | null , modality , action ⟩
++ clause_text
++ cards[]          # expanded norm cards
++ depends_on[]     # aggregated from cards
++ incomplete / oov_* for non-registry actions
+```
+
+### 6.3 Graph
+
+Built from triplets:
+
+- action / subject nodes;
+- procedural edges from `depends_on`;
+- optional subject-hub and context edges (UI toggles).
+
+### 6.4 Metrics & OOV
+
+- exact vs root-style coverage signals;
+- OOV forms/lemmas for registry growth (queue path exists).
 
 ---
 
-*HM-001 · Draft 0.1 — согласовано как целевая архитектура пилотного Host.*
+## 7. Frontend contract (`workspace.html`)
+
+- Single-page Workspace: input → analyze → annotated text + inspector + graph.
+- Layer checkboxes filter **spans only**; pipeline still may compute full set depending on request `layers`.
+- Inspector renders:
+  - linguistic triplet S → [M] → A;
+  - under it: card id, title, source line, status (draft highlighted), `depends_on`.
+- Clicking a triplet scrolls/highlights the clause in the document.
+
+UI language: operator-facing Ukrainian. Internal NKS terms are not required in labels.
+
+---
+
+## 8. Engineering invariants
+
+1. **Package is the source of legal linkage** — Host maps text to cards; cards map to acts.
+2. **Explainability** — every shown card is reachable from a matched verb/index hit (or explicitly empty).
+3. **Schema tolerance** — support both card source shapes until full migration to NKS-013.
+4. **No silent legal verdict** — outputs are analytical aids + disclaimers, not “lawful / unlawful”.
+5. **Index rebuild is explicit** — after card edits: `build_msu_index`, then restart or reload registry.
+6. **Feature branch → main** — experimental work lands on feature branches; demo baseline merges to `main` when stable.
+
+---
+
+## 9. Known limitations (honest)
+
+- Verb index keys may be single lemmas **or** multi-word phrases; phrase keys match only if the same string appears in text under current `\b` scan.
+- Perfective/imperfective mismatches (e.g. `затвердити` vs `затверджувати`) reduce hit rate until forms are aligned in cards/index.
+- `status: draft` cards still match if indexed; Host may show them with a draft badge (filter policy is product decision).
+- International sources (e.g. European Charter) may appear without a parallel national article — content quality issue, not pipeline bug.
+- Full Event Bus / multi-tenant isolation from early HOST drafts is not required for the current single-operator demo path.
+
+---
+
+## 10. Extension points
+
+| Need | Where |
+|------|--------|
+| New norm | add/edit `cards/*.json` → `build_msu_index` |
+| Better coverage | expand verbs/forms in cards or align with operational verb registry |
+| Stricter demo | filter `status != active` in pipeline or UI |
+| Dual citation | extend card `source` / secondary sources in package |
+| Lab alignment score | optional bridge to normos-lab metrics (not required in Host MVP) |
+
+---
+
+## 11. Related files
+
+- `HOST.md` — deployment, operator model, non-goals  
+- `CHECKLIST.md` — smoke / regression  
+- `packages/msu_ua/package.json` — package manifest  
+- Lab: NKS-011 (verbs), NKS-012 (modality), NKS-013 (cards)
+
+---
+
+*HM-ARCH-001 — architecture of the working Host ↔ msu_ua linkage after inspector card expansion.*
+```
+
+---
+
+### `HOST.md`
+
+```markdown
+# NormOS Host
+
+**Document ID:** HM-HOST-001  
+**Status:** Working  
+**Repo:** normos-host  
+**Companion:** ARCHITECTURE.md (pipeline & package contract)
+
+---
+
+## 1. What Host is
+
+NormOS Host is a **browser workplace** for primary analysis of local self-government normative texts (regulations, draft decisions, session materials).
+
+Stack (current):
+
+- Python 3.13 + Django
+- SQLite for local/pilot state (upgrade path: Postgres)
+- Rule-based analysis core in `hostui/services/`
+- Package `packages/msu_ua` for norm cards and indices
+- Optional Gemini-backed chat (not part of the deterministic analyzer)
+
+Host is an **execution environment**: login surface, analyze API, Workspace UI, document helpers.  
+It is **not** a public legal registry and **not** a substitute for a legal department.
+
+---
+
+## 2. Operator model
+
+| Actor | Expectation |
+|-------|-------------|
+| Secretary / lawyer (gromada) | Paste or upload text → read structured hints → decide themselves |
+| Host operator (team) | Deploy, accounts, package updates, index rebuild |
+| Lab researcher | Evolves theory/registry in lab repo; feeds improved data into package |
+
+**Human-in-the-loop:** system suggests; human remains accountable.
+
+Disclaimer (must stay visible in product messaging):
+
+> Automatic analysis only. Does not certify legality. Does not replace council or legal counsel decisions.
+
+---
+
+## 3. What Host provides
+
+### 3.1 Workspace (`/workspace/`)
+
+- Text input / file load
+- Analyze button → layered annotation:
+  - actions (verbs)
+  - modality
+  - roles
+  - MSU norm spans
+- **Inspector:** triplets ⟨S, M, A⟩ + linked norm cards (id, title, source, status, depends_on)
+- Interactive dependency graph (procedural links, optional subject clusters)
+- HTML export of annotated document
+
+### 3.2 API
+
+| Endpoint | Role |
+|----------|------|
+| `POST /api/analyze/` | Body: `{ "text", "layers" }` → full analysis JSON |
+| OOV propose (if enabled) | Queue unknown lemmas for registry work |
+| Chat routes | Optional assistant; separate from rule pipeline |
+
+### 3.3 Package tooling
+
+```bash
+python manage.py build_msu_index
+```
+
+Rebuilds `packages/msu_ua/index/{by_verb,by_agent,by_source}.json` from cards.
+
+---
+
+## 4. Repository layout (Host-centric)
+
+```
+normos-host/
+  host/                 # Django project settings, urls
+  hostui/
+    views.py            # pages + analyze API
+    templates/          # workspace, chat, documents, auth
+    services/           # analysis pipeline modules
+    management/commands/build_msu_index.py
+  packages/msu_ua/      # norm package (cards, sources, index)
+  data/                 # host-local dictionaries / OOV queue
+  ARCHITECTURE.md       # engineering architecture
+  HOST.md               # this file
+  CHECKLIST.md          # smoke tests
+```
+
+---
+
+## 5. Deployment notes (pilot)
+
+| Item | Practice |
+|------|----------|
+| Process | Django `runserver` or WSGI behind reverse proxy |
+| Access | LAN / Tailscale / VPS URL + login |
+| Secrets | `.env` / environment (`GEMINI_API_KEY` if chat used) — never commit |
+| DB | `db.sqlite3` local; do not treat as source of truth in git |
+| Code line | Stable demos on `main`; experiments on feature branches |
+
+After pull of new cards or Host code:
+
+1. install deps if needed  
+2. `migrate` if models changed  
+3. `build_msu_index` if cards changed  
+4. restart process  
+5. hard-refresh browser
+
+---
+
+## 6. Configuration boundaries
+
+| In Host | In package | Out of scope for Host MVP |
+|---------|------------|---------------------------|
+| HTTP, sessions, templates | Card texts, verbs, depends_on | Full national law database |
+| Pipeline orchestration | Index generation inputs | Automated “legal / illegal” verdict |
+| UI layer toggles | source_confidence content quality | Self-service tenant signup |
+| OOV queue file | Act citations | Training external LLMs on tenant docs |
+
+---
+
+## 7. Quality & safety posture
+
+1. **Deterministic path first** — verb/modality/card linkage must work without LLM.  
+2. **Traceable citations** — inspector shows card id + source line when a match exists.  
+3. **Draft awareness** — draft cards may appear in analysis; treat as non-final until `status: active` and confidence reviewed.  
+4. **OOV honesty** — unknown actions labeled; do not invent card links.  
+5. **Sensitive domains** (martial law, finance) — prefer `source_confidence: approximate` until freshly verified.
+
+---
+
+## 8. Relationship to lab NormOS
+
+| Lab | Host |
+|-----|------|
+| Theory, NKS, verb alphabet experiments | Production-shaped workplace |
+| Golden tests / alignment research | Operator UX + package execution |
+| May use richer event model | Current demo path is request/response pipeline |
+
+Host should stay a **thin execution shell** over package + services. Heavy research stays in lab until promoted into package data or Host modules deliberately.
+
+---
+
+## 9. Non-goals (current)
+
+- Official publication of acts  
+- Automatic compliance certificate  
+- Replacing national legal information systems  
+- Requiring every gromada to self-host infrastructure  
+- Treating chat answers as formal legal opinions  
+
+---
+
+## 10. Operational checklist (short)
+
+- [ ] `main` deployed / process restarted  
+- [ ] `packages/msu_ua/index/` present and non-empty  
+- [ ] Analyze sample text with known verbs (`затверджувати`, `приймати`, …)  
+- [ ] Inspector shows card block (not only S–M–A)  
+- [ ] Source line is human-readable (no `[object Object]`)  
+- [ ] Graph opens; depends_on visible where data exists  
+- [ ] Disclaimer still understood by operators  
+
+See also `CHECKLIST.md`.
+
+---
+
+## 11. Document map
+
+| File | Audience |
+|------|----------|
+| **ARCHITECTURE.md** | Engineers: pipeline, package contract, modules |
+| **HOST.md** | Engineers/operators: role of Host, deploy, boundaries |
+| **README.md** | (later) End-user oriented overview |
+
+---
+
+*HM-HOST-001 — Host as execution workplace for msu_ua-backed normative analysis.*
+```
+
+---
+
+Кратко:
+
+- **ARCHITECTURE.md** — связка Host ↔ `msu_ua`, поток данных, модули, нормализация карточек, инварианты.  
+- **HOST.md** — зачем Host, оператор, деплой, границы, non-goals.
+
+`README.md` можно позже сделать короче и «для секретаря/юриста», со ссылкой на эти два файла.
