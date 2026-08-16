@@ -1,0 +1,35 @@
+# NKS-014 · мінімальне насіння Golden Tests
+# Очікування навмисно прості: наявність/відсутність matched action і card ids.
+# Порівняння робить лише golden_runner; логіка матчингу — тільки pipeline.
+
+version: 1
+cases:
+  - id: CASE-001
+    description: "Затверджувати — лема з індексу, очікується картка N06"
+    text: "Рада затверджувати рішення щодо благоустрою."
+    expect:
+      min_triplets: 1
+      actions_any: ["затверджувати"]
+      card_ids_any: ["N06"]
+
+  - id: CASE-002
+    description: "Приймати — лема з індексу"
+    text: "Орган місцевого самоврядування приймати статут територіальної громади."
+    expect:
+      min_triplets: 1
+      actions_any: ["приймати"]
+      card_ids_any: ["N06"]
+
+  - id: CASE-003
+    description: "Модальний маркер + інфінітив поза індексом — incomplete/OOV-шлях"
+    text: "Депутат зобов'язаний голосувати за порядок денний."
+    expect:
+      min_triplets: 1
+      # не вимагаємо card_ids — типовий OOV-шлях для «голосувати»
+
+  - id: CASE-004
+    description: "Порожній/нерелевантний текст — без нормативних триплетів"
+    text: "Сьогодні сонячна погода у місті."
+    expect:
+      min_triplets: 0
+      max_triplets: 0
