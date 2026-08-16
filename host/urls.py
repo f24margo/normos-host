@@ -23,9 +23,15 @@ urlpatterns = [
     path('documents/', views.documents_page, name='documents_page'),
     path('documents/download/<str:doc_id>/', views.download_document, name='download_document'),
 
-    # NKS-014 Research Console (staff only)
+        # NKS-014 Research Console (staff only)
     path('research/', views_research.research_console, name='research_console'),
     path('api/research/status', views_research.research_status_api, name='research_status_api'),
     path('api/research/tests/run', views_research.research_golden_run_api, name='research_golden_run'),
     path('api/research/analyze', views_research.research_analyze_api, name='research_analyze'),
+    path('api/research/registry', views_research.research_registry_list_api, name='research_registry_list'),
+    path('api/research/registry/<str:verb_id>/confirm', views_research.research_registry_confirm_api, name='research_registry_confirm'),
+    path('api/research/oov-queue', views_research.research_oov_list_api, name='research_oov_list'),
+    path('api/research/oov-queue/<str:key>/reject', views_research.research_oov_reject_api, name='research_oov_reject'),
+    path('api/research/oov-queue/<str:key>/accept-lemma', views_research.research_oov_accept_lemma_api, name='research_oov_accept_lemma'),
+    path('api/research/oov-queue/<str:key>/accept-form', views_research.research_oov_accept_form_api, name='research_oov_accept_form'),
 ]

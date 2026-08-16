@@ -34,17 +34,19 @@
     .muted { color: #64748b; font-size: 12px; }
     button {
       background: #2563eb; color: #fff; border: none; border-radius: 6px;
-      padding: 8px 14px; font-size: 13px; cursor: pointer;
+      padding: 6px 12px; font-size: 12px; cursor: pointer;
     }
     button:disabled { opacity: 0.5; cursor: wait; }
     button.secondary { background: #475569; }
+    button.danger { background: #b91c1c; }
+    button.ok { background: #047857; }
     textarea {
       width: 100%; min-height: 100px; background: #0f172a; color: #e2e8f0;
       border: 1px solid #475569; border-radius: 6px; padding: 10px; font-size: 13px;
       font-family: inherit;
     }
     table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #334155; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #334155; vertical-align: top; }
     th { color: #94a3b8; font-weight: 500; }
     .pass { color: #4ade80; }
     .fail { color: #f87171; }
@@ -54,6 +56,18 @@
       color: #cbd5e1;
     }
     .score { font-size: 18px; font-weight: 600; margin: 8px 0; }
+    select {
+      background: #0f172a; color: #e2e8f0; border: 1px solid #475569;
+      border-radius: 4px; padding: 4px 8px; font-size: 12px;
+    }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 11px; background: #334155;
+    }
+    .pill.lemma { background: #1e3a5f; color: #93c5fd; }
+    .pill.form { background: #3b2f1a; color: #fcd34d; }
+    .row-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
@@ -100,6 +114,31 @@
       </p>
       <pre id="adhocOut" style="display:none;"></pre>
     </section>
+
+    <section id="registry-triage">
+      <h2>5.4 · Verb Registry Triage</h2>
+      <p class="muted">Джерело: packages/msu_ua/data/norm_verbs_uk.json · запис одразу на диск · git commit вручну</p>
+      <div class="toolbar">
+        <label class="muted">Фільтр:</label>
+        <select id="regFilter">
+          <option value="needs_review" selected>needs_review</option>
+          <option value="reviewed">reviewed</option>
+          <option value="default">default</option>
+          <option value="all">all</option>
+        </select>
+        <button type="button" class="secondary" id="btnRegReload">Оновити</button>
+      </div>
+      <div id="regOut" class="muted">Завантаження…</div>
+    </section>
+
+    <section id="oov-queue">
+      <h2>5.4 · OOV черга</h2>
+      <p class="muted">data/oov_queue.json · pending only</p>
+      <div class="toolbar">
+        <button type="button" class="secondary" id="btnOovReload">Оновити</button>
+      </div>
+      <div id="oovOut" class="muted">Завантаження…</div>
+    </section>
   </main>
 
   <script>
@@ -117,6 +156,16 @@
       return res.json();
     }
 
+    async function getJson(url) {
+      const res = await fetch(url, { credentials: "same-origin" });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(res.status + " " + t.slice(0, 200));
+      }
+      return res.json();
+    }
+
+    // --- 5.2 Golden ---
     document.getElementById("btnGolden").addEventListener("click", async function () {
       const btn = this;
       btn.disabled = true;
@@ -147,6 +196,7 @@
       }
     });
 
+    // --- 5.3 Ad-hoc ---
     document.getElementById("btnAdhoc").addEventListener("click", async function () {
       const btn = this;
       const pre = document.getElementById("adhocOut");
@@ -156,7 +206,6 @@
       try {
         const text = document.getElementById("adhocText").value;
         const data = await postJson("/api/research/analyze", { text });
-        // Скорочений вивід для читабельності
         const summary = {
           is_admin_test: data.is_admin_test,
           status: data.status,
@@ -179,6 +228,161 @@
         btn.disabled = false;
       }
     });
+
+    // --- 5.4 Registry ---
+    let transitionTypes = [];
+
+    async function loadRegistry() {
+      const box = document.getElementById("regOut");
+      const filter = document.getElementById("regFilter").value;
+      box.textContent = "Завантаження…";
+      try {
+        const data = await getJson("/api/research/registry?status=" + encodeURIComponent(filter));
+        transitionTypes = data.transition_types || [];
+        const verbs = data.verbs || [];
+        if (!verbs.length) {
+          box.innerHTML = `<span class="muted">Немає записів для фільтра «${filter}».</span>`;
+          return;
+        }
+        let html = `<table><thead><tr>
+          <th>ID</th><th>Lemma</th><th>Forms</th><th>Modality</th><th>Type</th><th>Дії</th>
+        </tr></thead><tbody>`;
+        verbs.forEach(v => {
+          const opts = transitionTypes.map(t =>
+            `<option value="${t}" ${t === v.transition_type ? "selected" : ""}>${t}</option>`
+          ).join("");
+          html += `<tr data-id="${v.id}">
+            <td>${v.id}</td>
+            <td><b>${v.lemma}</b></td>
+            <td class="muted">${(v.forms || []).join(", ")}</td>
+            <td>${v.modality || ""}</td>
+            <td><select class="tt-select">${opts}</select></td>
+            <td class="row-actions">
+              <button type="button" class="ok btn-confirm">Підтвердити</button>
+            </td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+        box.innerHTML = html;
+
+        box.querySelectorAll(".btn-confirm").forEach(btn => {
+          btn.addEventListener("click", async function () {
+            const tr = this.closest("tr");
+            const id = tr.getAttribute("data-id");
+            const tt = tr.querySelector(".tt-select").value;
+            this.disabled = true;
+            try {
+              await postJson("/api/research/registry/" + encodeURIComponent(id) + "/confirm", {
+                transition_type: tt,
+              });
+              await loadRegistry();
+            } catch (e) {
+              alert(e.message);
+              this.disabled = false;
+            }
+          });
+        });
+      } catch (e) {
+        box.innerHTML = `<span class="fail">${e.message}</span>`;
+      }
+    }
+
+    document.getElementById("btnRegReload").addEventListener("click", loadRegistry);
+    document.getElementById("regFilter").addEventListener("change", loadRegistry);
+
+    // --- 5.4 OOV ---
+    async function loadOov() {
+      const box = document.getElementById("oovOut");
+      box.textContent = "Завантаження…";
+      try {
+        const data = await getJson("/api/research/oov-queue");
+        const items = data.items || [];
+        if (!items.length) {
+          box.innerHTML = `<span class="muted">Черга порожня.</span>`;
+          return;
+        }
+        let html = `<table><thead><tr>
+          <th>Lemma</th><th>Type</th><th>Count</th><th>Sources</th><th>Дії</th>
+        </tr></thead><tbody>`;
+        items.forEach(it => {
+          const typeClass = it.type === "form" ? "form" : "lemma";
+          html += `<tr data-key="${it.key}">
+            <td><b>${it.lemma}</b></td>
+            <td><span class="pill ${typeClass}">${it.type}</span></td>
+            <td>${it.count}</td>
+            <td class="muted">${(it.sources || []).join(", ")}</td>
+            <td class="row-actions">
+              <button type="button" class="ok btn-acc-lemma">Прийняти як лему</button>
+              <button type="button" class="secondary btn-acc-form">Як форму →</button>
+              <input type="text" class="target-lemma" placeholder="lemma цілі" style="width:110px;background:#0f172a;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:4px 6px;font-size:12px;">
+              <button type="button" class="danger btn-reject">Відхилити</button>
+            </td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+        box.innerHTML = html;
+
+        box.querySelectorAll(".btn-reject").forEach(btn => {
+          btn.addEventListener("click", async function () {
+            const key = this.closest("tr").getAttribute("data-key");
+            this.disabled = true;
+            try {
+              await postJson("/api/research/oov-queue/" + encodeURIComponent(key) + "/reject", {});
+              await loadOov();
+            } catch (e) {
+              alert(e.message);
+              this.disabled = false;
+            }
+          });
+        });
+
+        box.querySelectorAll(".btn-acc-lemma").forEach(btn => {
+          btn.addEventListener("click", async function () {
+            const key = this.closest("tr").getAttribute("data-key");
+            this.disabled = true;
+            try {
+              await postJson("/api/research/oov-queue/" + encodeURIComponent(key) + "/accept-lemma", {});
+              await loadOov();
+              await loadRegistry();
+            } catch (e) {
+              alert(e.message);
+              this.disabled = false;
+            }
+          });
+        });
+
+        box.querySelectorAll(".btn-acc-form").forEach(btn => {
+          btn.addEventListener("click", async function () {
+            const tr = this.closest("tr");
+            const key = tr.getAttribute("data-key");
+            const target = (tr.querySelector(".target-lemma").value || "").trim();
+            if (!target) {
+              alert("Вкажіть lemma цілі");
+              return;
+            }
+            this.disabled = true;
+            try {
+              await postJson("/api/research/oov-queue/" + encodeURIComponent(key) + "/accept-form", {
+                target_lemma: target,
+              });
+              await loadOov();
+              await loadRegistry();
+            } catch (e) {
+              alert(e.message);
+              this.disabled = false;
+            }
+          });
+        });
+      } catch (e) {
+        box.innerHTML = `<span class="fail">${e.message}</span>`;
+      }
+    }
+
+    document.getElementById("btnOovReload").addEventListener("click", loadOov);
+
+    // initial
+    loadRegistry();
+    loadOov();
   </script>
 </body>
 </html>
