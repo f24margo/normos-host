@@ -147,3 +147,9 @@ ALLOWED_HOSTS = [
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = ['https://macbook-pro---nikolay.tailc8de92.ts.net']
+ALLOWED_HOSTS = [
+    'macbook-pro---nikolay.tailc8de92.ts.net',
+    'localhost',
+    '127.0.0.1',
+    'testserver',
+]
