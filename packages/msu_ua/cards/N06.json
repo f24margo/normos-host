@@ -18,5 +18,11 @@
     "N01"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "CONSTITUTION_MSU",
+    "locator": "ст. 140, 143",
+    "confidence": null
+  },
+  "hierarchy_tier": "constitution",
+  "hierarchy_tier_status": "default"
 }

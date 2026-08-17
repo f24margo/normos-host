@@ -17,5 +17,11 @@
     "N07"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "LAW_MARTIAL_STATE_ART4",
+    "locator": "ст. 4",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

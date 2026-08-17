@@ -17,5 +17,11 @@
     "N25"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "PRIVATIZATION_CODE_ART11",
+    "locator": "ст. 11",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

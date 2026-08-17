@@ -18,5 +18,11 @@
     "N15"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "LAND_CODE_ART83",
+    "locator": "ст. 83",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

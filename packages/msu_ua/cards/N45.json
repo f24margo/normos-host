@@ -17,5 +17,11 @@
     "N44"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "LOGU_ART34",
+    "locator": "ст. 34",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

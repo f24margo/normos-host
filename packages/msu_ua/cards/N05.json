@@ -18,5 +18,11 @@
     "N04"
   ],
   "status": "active",
-  "default_modality": "PERM"
+  "source_ref": {
+    "act_id": "LAW_MSU",
+    "locator": "ст. 60",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

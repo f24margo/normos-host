@@ -16,5 +16,11 @@
     "N01"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "URBAN_CODE_ART16_17",
+    "locator": "ст. 16, 17",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

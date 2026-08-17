@@ -16,5 +16,11 @@
     "N05"
   ],
   "status": "active",
-  "default_modality": "PERM"
+  "source_ref": {
+    "act_id": "LAND_RIGHTS_TG",
+    "locator": "ст. General",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

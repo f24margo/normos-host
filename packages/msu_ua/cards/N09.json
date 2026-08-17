@@ -17,5 +17,11 @@
     "N08"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "LAW_SERVICE_OMS",
+    "locator": "ст. General",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

@@ -17,5 +17,11 @@
     "N13"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "TAX_CODE_ART268",
+    "locator": "ст. 268",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

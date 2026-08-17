@@ -18,5 +18,11 @@
     "N25"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "EDUCATION_CODE_ART66",
+    "locator": "ст. 66",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

@@ -17,5 +17,11 @@
     "N46"
   ],
   "status": "active",
-  "default_modality": "PERM"
+  "source_ref": {
+    "act_id": "LOGU_ART36",
+    "locator": "ст. 36",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

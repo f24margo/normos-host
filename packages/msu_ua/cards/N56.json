@@ -1,0 +1,37 @@
+{
+  "id": "N56",
+  "title": "Видання розпоряджень міського голови та здійснення виконавчих повноважень",
+  "depends_on": [
+    "N52",
+    "N55"
+  ],
+  "sources": [
+    {
+      "source_id": "LOGU_ART42",
+      "locator": "ст. 42",
+      "confidence": "official"
+    }
+  ],
+  "verbs": [
+    "видавати розпорядження",
+    "керувати виконавчим комітетом",
+    "звітувати перед радою"
+  ],
+  "agents": [
+    "сільський, селищний, міський голова"
+  ],
+  "condition_hint": "Перевірте відповідність виданого розпорядження голови чинному законодавству та межі його повноважень",
+  "risk_if_missing": "Ризик прийняття неправомірного індивідуального чи нормативного акта виконавчої влади на місцях",
+  "status": "active",
+  "source_ref": {
+    "act_id": "LOGU_ART42",
+    "locator": "ст. 42",
+    "confidence": "official"
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default",
+  "template_text": "сільський, селищний, міський голова — Перевірте відповідність виданого розпорядження голови чинному законодавству та межі його повноважень. Дата: {session_date}.",
+  "template_text_status": "draft",
+  "card_lifecycle_type": "state_change",
+  "card_lifecycle_type_status": "default"
+}

@@ -24,5 +24,13 @@
     "N01"
   ],
   "status": "draft",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "EUR_CHARTER_LGS_1985",
+    "locator": "ст. 3, ч. 2",
+    "confidence": "verified"
+  },
+  "hierarchy_tier": "charter",
+  "hierarchy_tier_status": "default",
+  "template_text": "ради — Формування та підзвітність виконавчих органів місцевим радам. Дата: {session_date}.",
+  "template_text_status": "draft"
 }
