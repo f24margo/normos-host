@@ -16,5 +16,11 @@
     "N01"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "REGULATORY_CODE_ART7",
+    "locator": "ст. 7",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

@@ -22,5 +22,13 @@
     "N01"
   ],
   "status": "draft",
-  "default_modality": "PROH"
+  "source_ref": {
+    "act_id": "EUR_CHARTER_LGS_1985",
+    "locator": "ст. 4, ч. 1-2",
+    "confidence": "verified"
+  },
+  "hierarchy_tier": "charter",
+  "hierarchy_tier_status": "default",
+  "template_text": "органи місцевого самоврядування — Визначення межі компетенції та ініціативи органів МСУ. Дата: {session_date}.",
+  "template_text_status": "draft"
 }

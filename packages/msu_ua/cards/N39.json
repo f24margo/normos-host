@@ -17,5 +17,11 @@
     "N11"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "ZKU_ART188",
+    "locator": "ст. 188",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

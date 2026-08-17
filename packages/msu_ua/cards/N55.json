@@ -1,0 +1,40 @@
+{
+  "id": "N55",
+  "title": "Прийняття актів місцевої ради, порядок голосування та підписання рішень",
+  "depends_on": [
+    "N52",
+    "N53",
+    "N54"
+  ],
+  "sources": [
+    {
+      "source_id": "LOGU_ART59",
+      "locator": "ст. 59",
+      "confidence": "official"
+    }
+  ],
+  "verbs": [
+    "ухвалювати рішення",
+    "приймати рішення ради",
+    "підписувати рішення",
+    "голосувати"
+  ],
+  "agents": [
+    "сільська, селищна, міська рада",
+    "сільський, селищний, міський голова"
+  ],
+  "condition_hint": "Перевірте дотримання процедури голосування та строки підписання рішення головою ради",
+  "risk_if_missing": "Ризик прийняття нелегітимного акта або перевищення повноважень при підписанні рішень",
+  "status": "active",
+  "source_ref": {
+    "act_id": "LOGU_ART59",
+    "locator": "ст. 59",
+    "confidence": "official"
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default",
+  "template_text": "сільська, селищна, міська рада — Перевірте дотримання процедури голосування та строки підписання рішення головою ради. Дата: {session_date}.",
+  "template_text_status": "draft",
+  "card_lifecycle_type": "state_change",
+  "card_lifecycle_type_status": "default"
+}

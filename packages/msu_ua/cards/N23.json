@@ -16,5 +16,11 @@
     "N22"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "URBAN_CODE_ART19",
+    "locator": "ст. 19",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

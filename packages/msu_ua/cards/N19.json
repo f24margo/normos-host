@@ -15,5 +15,11 @@
     "N13"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "TAX_CODE_ART293",
+    "locator": "ст. 293.2",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

@@ -18,5 +18,11 @@
     "N05"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "LEGAL_POSITION_VA_MSU",
+    "locator": "ст. Section 2",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

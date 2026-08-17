@@ -17,5 +17,11 @@
     "N25"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "HEALTH_CODE_ART16",
+    "locator": "ст. 16",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

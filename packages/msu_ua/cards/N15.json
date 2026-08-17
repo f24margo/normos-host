@@ -17,5 +17,11 @@
     "N13"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "DPS_LAND_TAX_RATES",
+    "locator": "ст. General",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }

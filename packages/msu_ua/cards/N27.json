@@ -15,5 +15,11 @@
     "N01"
   ],
   "status": "active",
-  "default_modality": "OBL"
+  "source_ref": {
+    "act_id": "BLAGOUSTROY_ART34",
+    "locator": "ст. 34",
+    "confidence": null
+  },
+  "hierarchy_tier": "law",
+  "hierarchy_tier_status": "default"
 }
